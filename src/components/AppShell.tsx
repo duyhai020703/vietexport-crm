@@ -8,7 +8,6 @@ import {
   ShoppingCart,
   Package,
   BarChart3,
-  Globe2,
   UserCheck,
   Shield,
 } from "lucide-react";
@@ -77,12 +76,14 @@ export default function AppShell({ children, onUserChanged }: AppShellProps) {
         <div className="w-full px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
           <div className="flex items-center gap-6">
             <Link href="/" className="flex items-center gap-2.5 shrink-0">
-              <div className="w-8 h-8 rounded-lg bg-[#1677FF] text-white flex items-center justify-center shadow-xs">
-                <Globe2 className="w-4.5 h-4.5" />
-              </div>
+              <img
+                src="/logo.png"
+                alt="TanNhienExport-CRM"
+                className="w-8 h-8 rounded-lg object-contain bg-white border border-[#E5EAF2] p-0.5 shrink-0"
+              />
               <div className="leading-tight">
                 <span className="font-bold text-slate-800 text-sm tracking-tight block">
-                  VietExport CRM
+                  TanNhienExport-CRM
                 </span>
                 <span className="text-[11px] text-slate-500 font-medium block">
                   Quản lý Xuất khẩu B2B

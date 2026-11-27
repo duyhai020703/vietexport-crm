@@ -13,9 +13,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "VietExport CRM — Quản lý Kinh doanh Xuất khẩu",
+  title: "TanNhienExport-CRM — Quản lý Kinh doanh Xuất khẩu",
   description:
     "Hệ thống quản lý khách hàng xuất khẩu (CRM Pipeline), danh mục sản phẩm, đơn hàng và báo cáo doanh thu.",
+  icons: {
+    icon: "/logo.png",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

@@ -325,7 +325,7 @@ export default function CrmHomePage() {
           <button
             type="button"
             onClick={loadCustomers}
-            className="p-2 rounded-lg bg-[#F4F7FB] text-slate-600 hover:bg-slate-200/70 transition-colors"
+            className="p-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100"
             title="Làm mới"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />

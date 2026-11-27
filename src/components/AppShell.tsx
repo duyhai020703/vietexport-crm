@@ -104,8 +104,8 @@ export default function AppShell({ children, onUserChanged }: AppShellProps) {
                     href={item.href}
                     className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                       isActive
-                        ? "bg-[#EBF4FF] text-[#1677FF]"
-                        : "text-slate-600 hover:bg-[#F4F7FB] hover:text-slate-900"
+                        ? "bg-[#EBF4FF] text-[#1677FF] border border-[#BFDBFE]/80"
+                        : "text-slate-600 hover:bg-[#F4F7FB] hover:text-slate-900 border border-transparent"
                     }`}
                   >
                     <Icon className="w-4 h-4" />

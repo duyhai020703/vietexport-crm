@@ -133,7 +133,7 @@ export default function CustomerListView({
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="bg-[#1E293B] text-white text-xs font-semibold tracking-wide divide-x divide-[#334155]">
+            <tr className="bg-[#F8FAFC] border-b border-[#E5EAF2] text-xs font-semibold text-slate-500 uppercase tracking-wider">
               <th className="py-3 px-4">Mã KH</th>
               <th className="py-3 px-4">Công ty</th>
               <th className="py-3 px-4">Quốc gia / Cảng đến</th>

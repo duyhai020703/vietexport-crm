@@ -330,7 +330,7 @@ export default function OrdersPage() {
                           e.target.value as OrderDTO["status"]
                         )
                       }
-                      className={`rounded-full px-2.5 py-1 text-xs font-semibold cursor-pointer focus:outline-none ${statusMeta.color}`}
+                      className={`rounded-full px-2.5 py-1 text-xs font-semibold border cursor-pointer focus:outline-none ${statusMeta.color}`}
                     >
                       {ORDER_STATUS_OPTIONS.map((st) => (
                         <option key={st.value} value={st.value}>
@@ -358,7 +358,7 @@ export default function OrdersPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-[#1E293B] text-white text-xs font-semibold tracking-wide divide-x divide-[#334155]">
+                <tr className="bg-[#F8FAFC] border-b border-[#E5EAF2] text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   <th className="py-3 px-4">Mã đơn</th>
                   <th className="py-3 px-4">Khách hàng</th>
                   <th className="py-3 px-4">Chi tiết mã hàng (SKU)</th>

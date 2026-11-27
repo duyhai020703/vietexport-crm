@@ -451,7 +451,7 @@ export default function CustomerFormModal({
                       className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full transition-colors ${
                         contact.isPrimary
                           ? "bg-amber-100 text-amber-800"
-                          : "bg-white text-slate-600 hover:bg-slate-100"
+                          : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-100"
                       }`}
                     >
                       <Star

@@ -1,0 +1,151 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  SALE
+}
+
+enum CustomerChannel {
+  IMPORTER
+  DISTRIBUTOR
+  SUPERMARKET
+  OEM
+  TRADING
+}
+
+enum CustomerSource {
+  TRADE_FAIR
+  B2B_PLATFORM
+  CUSTOMS_DATA
+  WEBSITE
+  REFERRAL
+}
+
+enum PipelineStage {
+  NEW_LEAD
+  CONTACTED
+  INQUIRY_QUALIFIED
+  QUOTED
+  SAMPLE_SENT
+  NEGOTIATING
+  ACTIVE_WON
+  DORMANT
+  LOST
+}
+
+enum OrderStatus {
+  QUOTED
+  CONFIRMED
+  SHIPPED
+  COMPLETED
+}
+
+model User {
+  id        String     @id @default(cuid())
+  name      String
+  email     String     @unique
+  role      Role       @default(SALE)
+  customers Customer[]
+  orders    Order[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@map("users")
+}
+
+model Customer {
+  id                String            @id @default(cuid())
+  customerCode      String            @unique
+  companyName       String
+  countryRegion     String
+  portOfDestination String?
+  channel           CustomerChannel
+  source            CustomerSource
+  salesRepId        String
+  salesRep          User              @relation(fields: [salesRepId], references: [id])
+  pipelineStage     PipelineStage     @default(NEW_LEAD)
+  lostReason        String?
+  contacts          CustomerContact[]
+  orders            Order[]
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@index([salesRepId])
+  @@index([pipelineStage])
+  @@index([companyName])
+  @@map("customers")
+}
+
+model CustomerContact {
+  id                  String   @id @default(cuid())
+  customerId          String
+  customer            Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  name                String
+  position            String?
+  email               String?
+  phoneWhatsAppWeChat String?
+  isPrimary           Boolean  @default(false)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([customerId])
+  @@map("customer_contacts")
+}
+
+model Product {
+  id            String      @id @default(cuid())
+  sku           String      @unique
+  name          String
+  specification String?
+  unit          String
+  basePrice     Float
+  orderItems    OrderItem[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@map("products")
+}
+
+model Order {
+  id          String      @id @default(cuid())
+  orderCode   String      @unique
+  customerId  String
+  customer    Customer    @relation(fields: [customerId], references: [id])
+  salesRepId  String
+  salesRep    User        @relation(fields: [salesRepId], references: [id])
+  orderDate   DateTime    @default(now())
+  status      OrderStatus @default(QUOTED)
+  totalAmount Float       @default(0)
+  notes       String?
+  items       OrderItem[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([customerId])
+  @@index([salesRepId])
+  @@index([orderDate])
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Float
+  unitPrice Float
+  subtotal  Float
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
+}

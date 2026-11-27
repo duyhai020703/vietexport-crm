@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { Edit2, Package, Plus, Search, Trash2, X } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import type { ProductDTO, UserDTO } from "@/types/crm";
-import { formatUSD } from "@/lib/constants";
+import { formatUSD, PRODUCT_CATEGORY_OPTIONS } from "@/lib/constants";
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<ProductDTO[]>([]);
@@ -16,6 +16,7 @@ export default function ProductsPage() {
   const [editing, setEditing] = useState<ProductDTO | null>(null);
   const [sku, setSku] = useState("");
   const [name, setName] = useState("");
+  const [category, setCategory] = useState("");
   const [specification, setSpecification] = useState("");
   const [unit, setUnit] = useState("Thùng");
   const [netWeightGrams, setNetWeightGrams] = useState("300");
@@ -59,6 +60,7 @@ export default function ProductsPage() {
     setEditing(null);
     setSku("");
     setName("");
+    setCategory("Siêu Mỏng");
     setSpecification("");
     setUnit("Thùng");
     setNetWeightGrams("300");
@@ -78,6 +80,7 @@ export default function ProductsPage() {
     setEditing(p);
     setSku(p.sku);
     setName(p.name);
+    setCategory(p.category ?? "");
     setSpecification(p.specification ?? "");
     setUnit(p.unit);
     setNetWeightGrams(String(p.netWeightGrams ?? 300));
@@ -111,6 +114,7 @@ export default function ProductsPage() {
         body: JSON.stringify({
           sku: sku.trim(),
           name: name.trim(),
+          category: category.trim() || null,
           specification: specification.trim() || null,
           unit: unit.trim(),
           netWeightGrams: Number(netWeightGrams) || 300,
@@ -211,6 +215,11 @@ export default function ProductsPage() {
                     <div className="font-bold text-slate-900 text-sm mt-1">
                       {p.name}
                     </div>
+                    {p.category && (
+                      <span className="inline-block mt-0.5 px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 text-[10px] font-medium">
+                        {p.category}
+                      </span>
+                    )}
                   </div>
                   <div className="text-right shrink-0">
                     <div className="font-bold text-slate-900 text-sm tabular-nums">
@@ -299,6 +308,11 @@ export default function ProductsPage() {
                         <div className="flex items-center gap-2">
                           <Package className="w-4 h-4 text-slate-400 shrink-0" />
                           <span>{p.name}</span>
+                          {p.category && (
+                            <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[11px] font-medium">
+                              {p.category}
+                            </span>
+                          )}
                         </div>
                         {p.specification && (
                           <div className="text-xs font-normal text-slate-500 pl-6">
@@ -545,7 +559,7 @@ export default function ProductsPage() {
                   </div>
                 )}
 
-                <div className={isManagerOrAdmin ? "sm:col-span-2" : "sm:col-span-3"}>
+                <div className={isManagerOrAdmin ? "sm:col-span-2" : "sm:col-span-2"}>
                   <label className="block text-xs font-medium text-slate-700 mb-1">
                     Mô tả quy cách đóng gói
                   </label>
@@ -555,6 +569,24 @@ export default function ProductsPage() {
                     onChange={(e) => setSpecification(e.target.value)}
                     className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
                   />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-700 mb-1">
+                    Phân loại
+                  </label>
+                  <input
+                    type="text"
+                    list="product-category-options"
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    placeholder="Siêu Mỏng, Cuốn, Đa nem, Mè..."
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                  />
+                  <datalist id="product-category-options">
+                    {PRODUCT_CATEGORY_OPTIONS.map((cat) => (
+                      <option key={cat} value={cat} />
+                    ))}
+                  </datalist>
                 </div>
               </div>
 

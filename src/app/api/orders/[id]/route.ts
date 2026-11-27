@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, isSalesAdminOrAbove } from "@/lib/auth";
-import type { OrderStatus } from "@/generated/prisma/client";
+import {
+  ORDER_ITEM_PRODUCT_SELECT,
+  prepareOrderItems,
+  type OrderItemInput,
+} from "@/lib/order-helpers";
+import type { Incoterm, OrderStatus, OrderType } from "@/generated/prisma/client";
 
 export async function PATCH(
   req: NextRequest,
@@ -36,7 +41,10 @@ export async function PATCH(
     const body = await req.json();
     const {
       status,
+      orderType,
+      incoterm,
       poNumber,
+      productionOrderNo,
       contractDate,
       estProductionDate,
       actualProductionDate,
@@ -48,12 +56,17 @@ export async function PATCH(
       docsStatus,
       dhlTracking,
       containerCount,
+      containerType,
+      paymentStatus,
       notes,
       orderDate,
       items,
     } = body as {
       status?: OrderStatus;
+      orderType?: OrderType;
+      incoterm?: Incoterm;
       poNumber?: string | null;
+      productionOrderNo?: string | null;
       contractDate?: string | null;
       estProductionDate?: string | null;
       actualProductionDate?: string | null;
@@ -65,9 +78,11 @@ export async function PATCH(
       docsStatus?: string | null;
       dhlTracking?: string | null;
       containerCount?: number;
+      containerType?: string | null;
+      paymentStatus?: string | null;
       notes?: string | null;
       orderDate?: string;
-      items?: { productId: string; quantity: number; unitPrice: number }[];
+      items?: OrderItemInput[];
     };
 
     const parseDateOrNull = (val: string | null | undefined) => {
@@ -76,33 +91,50 @@ export async function PATCH(
       return new Date(val);
     };
 
+    if (Array.isArray(items) && items.length === 0) {
+      return NextResponse.json(
+        { error: "Đơn hàng phải có ít nhất 1 sản phẩm." },
+        { status: 400 }
+      );
+    }
+
     const updated = await prisma.$transaction(async (tx) => {
       let totalAmount = existing.totalAmount;
 
       if (Array.isArray(items) && items.length > 0) {
+        const prepared = prepareOrderItems(items).map((item) => ({
+          ...item,
+          orderId: id,
+        }));
         await tx.orderItem.deleteMany({ where: { orderId: id } });
-        const prepared = items.map((item) => {
-          const qty = Number(item.quantity);
-          const price = Number(item.unitPrice);
-          return {
-            orderId: id,
-            productId: item.productId,
-            quantity: qty,
-            unitPrice: price,
-            subtotal: Number((qty * price).toFixed(2)),
-          };
-        });
         totalAmount = Number(
           prepared.reduce((sum, i) => sum + i.subtotal, 0).toFixed(2)
         );
         await tx.orderItem.createMany({ data: prepared });
       }
 
+      const trimmedContainerType =
+        containerType !== undefined ? containerType?.trim() || null : undefined;
+      if (trimmedContainerType) {
+        await tx.containerType.upsert({
+          where: { name: trimmedContainerType },
+          update: {},
+          create: { name: trimmedContainerType },
+        });
+      }
+
+      const nextStatus = status ?? existing.status;
+
       return tx.order.update({
         where: { id },
         data: {
           ...(status !== undefined ? { status } : {}),
+          ...(orderType !== undefined ? { orderType } : {}),
+          ...(incoterm !== undefined ? { incoterm } : {}),
           ...(poNumber !== undefined ? { poNumber: poNumber?.trim() || null } : {}),
+          ...(productionOrderNo !== undefined
+            ? { productionOrderNo: productionOrderNo?.trim() || null }
+            : {}),
           ...(contractDate !== undefined
             ? { contractDate: parseDateOrNull(contractDate) }
             : {}),
@@ -132,6 +164,14 @@ export async function PATCH(
           ...(containerCount !== undefined
             ? { containerCount: Number(containerCount) || 1 }
             : {}),
+          ...(trimmedContainerType !== undefined
+            ? { containerType: trimmedContainerType }
+            : {}),
+          ...(nextStatus !== "COMPLETED"
+            ? { paymentStatus: null }
+            : paymentStatus !== undefined
+            ? { paymentStatus: paymentStatus?.trim() || null }
+            : {}),
           ...(notes !== undefined ? { notes: notes?.trim() || null } : {}),
           ...(orderDate !== undefined ? { orderDate: new Date(orderDate) } : {}),
           totalAmount,
@@ -150,14 +190,7 @@ export async function PATCH(
           items: {
             include: {
               product: {
-                select: {
-                  id: true,
-                  sku: true,
-                  name: true,
-                  unit: true,
-                  netWeightGrams: true,
-                  packsPerCarton: true,
-                },
+                select: ORDER_ITEM_PRODUCT_SELECT,
               },
             },
           },
@@ -168,6 +201,12 @@ export async function PATCH(
 
     return NextResponse.json({ order: updated });
   } catch (error) {
+    if (error instanceof Error && error.message === "INVALID_ITEM") {
+      return NextResponse.json(
+        { error: "Sản phẩm, sản lượng (> 0) hoặc đơn giá không hợp lệ." },
+        { status: 400 }
+      );
+    }
     console.error("PATCH /api/orders/[id] error:", error);
     return NextResponse.json(
       { error: "Không thể cập nhật đơn hàng." },

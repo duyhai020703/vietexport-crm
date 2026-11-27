@@ -14,6 +14,7 @@ export async function GET(req: NextRequest) {
             OR: [
               { sku: { contains: search, mode: "insensitive" } },
               { name: { contains: search, mode: "insensitive" } },
+              { category: { contains: search, mode: "insensitive" } },
               { specification: { contains: search, mode: "insensitive" } },
             ],
           }
@@ -46,6 +47,7 @@ export async function POST(req: NextRequest) {
     const {
       sku,
       name,
+      category,
       specification,
       unit,
       netWeightGrams = 300,
@@ -60,6 +62,7 @@ export async function POST(req: NextRequest) {
     } = body as {
       sku?: string;
       name?: string;
+      category?: string;
       specification?: string;
       unit?: string;
       netWeightGrams?: number;
@@ -95,6 +98,7 @@ export async function POST(req: NextRequest) {
       data: {
         sku: sku.trim().toUpperCase(),
         name: name.trim(),
+        category: category?.trim() || null,
         specification: specification?.trim() || null,
         unit: unit.trim(),
         netWeightGrams: Number(netWeightGrams) || 300,

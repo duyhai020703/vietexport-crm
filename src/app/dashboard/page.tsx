@@ -433,7 +433,7 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
           <div className="lg:col-span-7 bg-white rounded-xl border border-[#E5EAF2] p-5 shadow-[0_1px_3px_rgba(15,23,42,0.03)]">
             <h2 className="text-base font-bold text-slate-900 mb-1">
-              Phân bổ Khách hàng theo 9 giai đoạn Pipeline
+              Phân bổ Khách hàng theo 5 giai đoạn Pipeline
             </h2>
             <p className="text-xs text-slate-500 mb-4">
               Theo dõi chuyển đổi phễu bán hàng

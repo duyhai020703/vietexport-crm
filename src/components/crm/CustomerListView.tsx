@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Edit2, Trash2, AlertTriangle } from "lucide-react";
+import { Edit2, ShoppingBag, Trash2, AlertTriangle } from "lucide-react";
 import type { CustomerDTO } from "@/types/crm";
 import {
   getChannelLabel,
@@ -104,9 +104,15 @@ export default function CustomerListView({
               )}
 
               <div className="flex items-center justify-between pt-2 border-t border-[#EEF2F7]">
-                <span className="text-xs text-slate-500">
-                  Sale: <strong className="text-slate-700">{c.salesRep.name}</strong>
-                </span>
+                <div className="flex items-center gap-3 text-xs text-slate-500">
+                  <span>
+                    Sale: <strong className="text-slate-700">{c.salesRep.name}</strong>
+                  </span>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-semibold">
+                    <ShoppingBag className="w-3 h-3 text-[#1677FF]" />
+                    {c._count?.orders ?? 0} đơn
+                  </span>
+                </div>
                 <div className="inline-flex items-center gap-1">
                   <button
                     type="button"
@@ -145,6 +151,7 @@ export default function CustomerListView({
               <th className="py-3 px-4">Phân loại / Nguồn</th>
               <th className="py-3 px-4">PIC Chính</th>
               <th className="py-3 px-4">Trạng thái</th>
+              <th className="py-3 px-4 text-center">Đơn hàng</th>
               <th className="py-3 px-4">Sale phụ trách</th>
               <th className="py-3 px-4 text-right">Thao tác</th>
             </tr>
@@ -226,6 +233,21 @@ export default function CustomerListView({
                         </span>
                       )}
                     </div>
+                  </td>
+                  <td className="py-3 px-4 whitespace-nowrap text-center">
+                    <button
+                      type="button"
+                      onClick={() => onEdit(c)}
+                      title="Xem / quản lý đơn hàng của khách"
+                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold tabular-nums transition-colors ${
+                        (c._count?.orders ?? 0) > 0
+                          ? "bg-[#EBF4FF] text-[#1677FF] border border-[#BFDBFE]/60 hover:bg-blue-100"
+                          : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+                      }`}
+                    >
+                      <ShoppingBag className="w-3.5 h-3.5" />
+                      {c._count?.orders ?? 0} đơn
+                    </button>
                   </td>
                   <td className="py-3 px-4 whitespace-nowrap text-slate-700">
                     {c.salesRep.name}

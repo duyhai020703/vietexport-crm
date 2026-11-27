@@ -11,6 +11,7 @@ export async function PATCH(
     const {
       sku,
       name,
+      category,
       specification,
       unit,
       netWeightGrams,
@@ -25,6 +26,7 @@ export async function PATCH(
     } = body as {
       sku?: string;
       name?: string;
+      category?: string | null;
       specification?: string | null;
       unit?: string;
       netWeightGrams?: number;
@@ -63,6 +65,9 @@ export async function PATCH(
       data: {
         ...(sku !== undefined ? { sku: sku.trim().toUpperCase() } : {}),
         ...(name !== undefined ? { name: name.trim() } : {}),
+        ...(category !== undefined
+          ? { category: category?.trim() || null }
+          : {}),
         ...(specification !== undefined
           ? { specification: specification?.trim() || null }
           : {}),

@@ -9,24 +9,6 @@ export const PIPELINE_STAGES = [
     badge: "bg-[#F1F5F9] text-slate-700",
   },
   {
-    key: "CONTACTED",
-    label: "Contacted",
-    viLabel: "Đã liên hệ",
-    description: "Đã gửi email/tin nhắn chào hàng",
-    color: "bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]",
-    headerBg: "bg-white border-t-[#1677FF]",
-    badge: "bg-[#EBF4FF] text-[#1677FF]",
-  },
-  {
-    key: "INQUIRY_QUALIFIED",
-    label: "Inquiry / Qualified",
-    viLabel: "Đang hỏi hàng",
-    description: "Khách có phản hồi, đang hỏi thông tin/quy cách",
-    color: "bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]",
-    headerBg: "bg-white border-t-[#3B82F6]",
-    badge: "bg-[#EBF4FF] text-[#1D4ED8]",
-  },
-  {
     key: "QUOTED",
     label: "Quoted",
     viLabel: "Đã báo giá",
@@ -34,15 +16,6 @@ export const PIPELINE_STAGES = [
     color: "bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]",
     headerBg: "bg-white border-t-[#0284C7]",
     badge: "bg-[#E0F2FE] text-[#0369A1]",
-  },
-  {
-    key: "SAMPLE_SENT",
-    label: "Sample Sent",
-    viLabel: "Đã gửi mẫu",
-    description: "Đã gửi mẫu thử, đang chờ feedback",
-    color: "bg-[#FFF7ED] text-[#D97706] border-[#FED7AA]",
-    headerBg: "bg-white border-t-[#F59E0B]",
-    badge: "bg-[#FEF3C7] text-[#B45309]",
   },
   {
     key: "NEGOTIATING",
@@ -61,15 +34,6 @@ export const PIPELINE_STAGES = [
     color: "bg-[#ECFDF5] text-[#059669] border-[#A7F3D0]",
     headerBg: "bg-white border-t-[#10B981]",
     badge: "bg-[#D1FAE5] text-[#047857]",
-  },
-  {
-    key: "DORMANT",
-    label: "Dormant",
-    viLabel: "Ngủ đông",
-    description: "Khách cũ đã mua nhưng quá 3-6 tháng chưa đặt lại",
-    color: "bg-[#F8FAFC] text-slate-600 border-[#E2E8F0]",
-    headerBg: "bg-white border-t-[#64748B]",
-    badge: "bg-[#F1F5F9] text-slate-700",
   },
   {
     key: "LOST",
@@ -110,6 +74,29 @@ export const ORDER_STATUS_OPTIONS = [
 ] as const;
 
 export const INCOTERM_OPTIONS = ["EXW", "FOB", "CFR", "CIF"] as const;
+
+export const PRODUCT_CATEGORY_OPTIONS = [
+  "Siêu Mỏng",
+  "Cuốn",
+  "Đa nem",
+  "Mè",
+  "Trộn / Gia vị",
+  "OEM",
+] as const;
+
+export const ORDER_PAYMENT_STATUS_OPTIONS = [
+  "Cọc",
+  "Chưa thanh toán",
+  "Công nợ",
+  "Đã thanh toán",
+] as const;
+
+export const DEFAULT_CONTAINER_TYPES = [
+  "20ft",
+  "40ft",
+  "40HC",
+  "LCL",
+] as const;
 
 export const LOST_REASON_PRESETS = [
   "Giá cao hơn đối thủ",
@@ -189,11 +176,65 @@ export function calculateTons(
   );
 }
 
+export function calculateKg(
+  netWeightGrams: number,
+  packsPerCarton: number,
+  quantityCartons: number
+): number {
+  return Number(
+    ((netWeightGrams * packsPerCarton * quantityCartons) / 1000).toFixed(2)
+  );
+}
+
+/**
+ * Tự động tính khối lượng (kg) từ gram/gói (trong tên sản phẩm hoặc quy cách),
+ * số gói/thùng (trong quy cách hoặc thông số SKU) và số lượng thùng.
+ */
+export function computeOrderItemWeightKg(params: {
+  productName?: string | null;
+  specification?: string | null;
+  netWeightGrams?: number | null;
+  packsPerCarton?: number | null;
+  quantity: number;
+}): number {
+  const { productName, specification, netWeightGrams, packsPerCarton, quantity } =
+    params;
+  if (!quantity || quantity <= 0 || isNaN(quantity)) return 0;
+
+  const parseGrams = (text?: string | null): number | null => {
+    if (!text) return null;
+    const m = text.match(/(\d+(?:[.,]\d+)?)\s*(?:g|gr|gam|gram)\b/i);
+    if (!m) return null;
+    const val = Number(m[1].replace(",", "."));
+    return isNaN(val) || val <= 0 ? null : val;
+  };
+
+  const parsePacks = (text?: string | null): number | null => {
+    if (!text) return null;
+    const m = text.match(/(\d+)\s*(?:gói|túi|bịch|xấp|pack|packs|pcs)\b/i);
+    if (!m) return null;
+    const val = Number(m[1]);
+    return isNaN(val) || val <= 0 ? null : val;
+  };
+
+  const grams =
+    parseGrams(productName) ??
+    parseGrams(specification) ??
+    (netWeightGrams && netWeightGrams > 0 ? netWeightGrams : 0);
+
+  const packs =
+    parsePacks(specification) ??
+    (packsPerCarton && packsPerCarton > 0 ? packsPerCarton : 0);
+
+  if (grams <= 0 || packs <= 0) return 0;
+  return Number(((grams * packs * quantity) / 1000).toFixed(2));
+}
+
 export function isOverdueSevenDays(
   stage: string,
   lastActivityAt: string | Date
 ): boolean {
-  if (stage !== "QUOTED" && stage !== "SAMPLE_SENT") return false;
+  if (stage !== "QUOTED") return false;
   const diffMs = Date.now() - new Date(lastActivityAt).getTime();
   return diffMs > 7 * 24 * 60 * 60 * 1000;
 }

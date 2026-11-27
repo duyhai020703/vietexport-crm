@@ -39,13 +39,9 @@ export interface CustomerDTO {
   salesRep: UserDTO;
   pipelineStage:
     | "NEW_LEAD"
-    | "CONTACTED"
-    | "INQUIRY_QUALIFIED"
     | "QUOTED"
-    | "SAMPLE_SENT"
     | "NEGOTIATING"
     | "ACTIVE_WON"
-    | "DORMANT"
     | "LOST";
   lostReason: string | null;
   lastActivityAt: string;
@@ -61,6 +57,7 @@ export interface ProductDTO {
   id: string;
   sku: string;
   name: string;
+  category?: string | null;
   specification: string | null;
   unit: string;
   netWeightGrams: number;
@@ -137,11 +134,19 @@ export interface OrderItemDTO {
     id: string;
     sku: string;
     name: string;
+    category?: string | null;
+    specification?: string | null;
     unit: string;
     netWeightGrams: number;
     packsPerCarton: number;
   };
+  category?: string | null;
+  specification?: string | null;
+  unit?: string | null;
   quantity: number;
+  weightKg?: number | null;
+  market?: string | null;
+  deliveryDate?: string | null;
   unitPrice: number;
   subtotal: number;
 }
@@ -150,6 +155,7 @@ export interface OrderDTO {
   id: string;
   orderCode: string;
   poNumber: string | null;
+  productionOrderNo?: string | null;
   customerId: string;
   customer: {
     id: string;
@@ -178,6 +184,7 @@ export interface OrderDTO {
   docsStatus: string | null;
   dhlTracking: string | null;
   containerCount: number;
+  containerType?: string | null;
   status:
     | "QUOTED"
     | "CONFIRMED"
@@ -185,6 +192,7 @@ export interface OrderDTO {
     | "READY_TO_SHIP"
     | "SHIPPED"
     | "COMPLETED";
+  paymentStatus?: string | null;
   totalAmount: number;
   paidAmount: number;
   notes: string | null;

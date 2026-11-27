@@ -206,7 +206,7 @@ export async function GET(req: NextRequest) {
       }))
       .sort((a, b) => b.totalRevenue - a.totalRevenue);
 
-    // Pipeline distribution across all 9 stages
+    // Pipeline distribution across all 5 stages
     const pipelineMap = new Map<string, number>();
     for (const st of PIPELINE_STAGES) {
       pipelineMap.set(st.key, 0);

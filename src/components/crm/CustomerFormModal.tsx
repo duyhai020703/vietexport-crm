@@ -4,10 +4,13 @@ import React, { useEffect, useState } from "react";
 import {
   AlertCircle,
   Plus,
+  ShoppingCart,
   Star,
   Trash2,
+  UserCheck,
   X,
 } from "lucide-react";
+import CustomerOrdersTab from "@/components/crm/CustomerOrdersTab";
 import type {
   CustomerActivityDTO,
   CustomerContactDTO,
@@ -77,11 +80,17 @@ export default function CustomerFormModal({
   const [actFollowUp, setActFollowUp] = useState("");
   const [actSaving, setActSaving] = useState(false);
 
+  // Modal Tabs (info vs orders)
+  const [activeTab, setActiveTab] = useState<"info" | "orders">("info");
+  const [ordersCount, setOrdersCount] = useState(0);
+
   useEffect(() => {
     if (!open) return;
     setError("");
     setDuplicateWarning(null);
+    setActiveTab("info");
     if (customer) {
+      setOrdersCount(customer._count?.orders ?? 0);
       setCompanyName(customer.companyName);
       setCountryRegion(customer.countryRegion);
       setPortOfDestination(customer.portOfDestination ?? "");
@@ -148,6 +157,15 @@ export default function CustomerFormModal({
 
     return () => clearTimeout(timer);
   }, [companyName, customer?.id, open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [open]);
 
   if (!open) return null;
 
@@ -271,17 +289,19 @@ export default function CustomerFormModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-2 sm:p-4">
-      <div className="bg-white rounded-xl shadow-xl border border-[#E5EAF2] w-full max-w-3xl max-h-[95vh] sm:max-h-[92vh] flex flex-col overflow-hidden">
-        <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b border-[#E5EAF2] bg-[#F8FAFC]">
+    <div className="fixed inset-0 z-50 flex bg-white">
+      <div className="bg-white w-full h-full flex flex-col overflow-hidden">
+        <div className="flex items-center justify-between px-4 sm:px-8 py-3.5 sm:py-4 border-b border-[#E5EAF2] bg-[#F8FAFC]">
           <div>
             <h2 className="text-lg font-bold text-slate-900">
               {isEdit
-                ? `Cập nhật Khách hàng (${customer?.customerCode})`
+                ? `Cập nhật Khách hàng (${customer?.companyName})`
                 : "Thêm Khách hàng Xuất khẩu Mới"}
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              Mã khách hàng sẽ được tự động sinh theo định dạng CUS-XXX
+              {isEdit
+                ? `Mã khách hàng: ${customer?.customerCode}`
+                : "Mã khách hàng sẽ được tự động sinh theo định dạng CUS-XXX"}
             </p>
           </div>
           <button
@@ -293,7 +313,52 @@ export default function CustomerFormModal({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-5">
+        {isEdit && (
+          <div className="flex items-center gap-1 px-4 sm:px-8 pt-2 border-b border-[#E5EAF2] bg-white">
+            <button
+              type="button"
+              onClick={() => setActiveTab("info")}
+              className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-semibold border-b-2 transition-colors ${
+                activeTab === "info"
+                  ? "border-[#1677FF] text-[#1677FF]"
+                  : "border-transparent text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              <UserCheck className="w-4 h-4" />
+              Hồ sơ &amp; Nhật ký
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("orders")}
+              className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-semibold border-b-2 transition-colors ${
+                activeTab === "orders"
+                  ? "border-[#1677FF] text-[#1677FF]"
+                  : "border-transparent text-slate-500 hover:text-slate-800"
+              }`}
+            >
+              <ShoppingCart className="w-4 h-4" />
+              Đơn hàng
+              <span
+                className={`px-1.5 py-0.5 rounded-full text-[11px] font-bold ${
+                  activeTab === "orders"
+                    ? "bg-[#EBF4FF] text-[#1677FF]"
+                    : "bg-slate-100 text-slate-600"
+                }`}
+              >
+                {ordersCount}
+              </span>
+            </button>
+          </div>
+        )}
+
+        <form
+          onSubmit={handleSubmit}
+          className={
+            activeTab === "info"
+              ? "flex-1 overflow-y-auto px-4 sm:px-8 py-6 space-y-5"
+              : "hidden"
+          }
+        >
           {error && (
             <div className="flex items-start gap-2.5 p-3.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-sm">
               <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
@@ -670,6 +735,34 @@ export default function CustomerFormModal({
             </button>
           </div>
         </form>
+
+        {isEdit && customer && (
+          <div
+            className={
+              activeTab === "orders"
+                ? "flex-1 overflow-y-auto px-4 sm:px-8 py-6 flex flex-col justify-between gap-5"
+                : "hidden"
+            }
+          >
+            <CustomerOrdersTab
+              key={customer.id}
+              customerId={customer.id}
+              customerName={customer.companyName}
+              customerCountry={customer.countryRegion}
+              onOrderChanged={onSaved}
+              onCountChange={setOrdersCount}
+            />
+            <div className="flex items-center justify-end pt-3 border-t border-slate-200">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 rounded-lg text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

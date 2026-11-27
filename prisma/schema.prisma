@@ -32,13 +32,9 @@ enum CustomerSource {
 
 enum PipelineStage {
   NEW_LEAD
-  CONTACTED
-  INQUIRY_QUALIFIED
   QUOTED
-  SAMPLE_SENT
   NEGOTIATING
   ACTIVE_WON
-  DORMANT
   LOST
 }
 
@@ -161,6 +157,7 @@ model Product {
   id               String          @id @default(cuid())
   sku              String          @unique
   name             String
+  category         String?
   specification    String?
   unit             String
   netWeightGrams   Float           @default(300)
@@ -235,6 +232,7 @@ model Order {
   id                   String         @id @default(cuid())
   orderCode            String         @unique
   poNumber             String?
+  productionOrderNo    String?
   customerId           String
   customer             Customer       @relation(fields: [customerId], references: [id])
   salesRepId           String
@@ -253,7 +251,9 @@ model Order {
   docsStatus           String?
   dhlTracking          String?
   containerCount       Float          @default(1)
+  containerType        String?
   status               OrderStatus    @default(CONFIRMED)
+  paymentStatus        String?
   totalAmount          Float          @default(0)
   paidAmount           Float          @default(0)
   notes                String?
@@ -270,14 +270,20 @@ model Order {
 }
 
 model OrderItem {
-  id        String  @id @default(cuid())
-  orderId   String
-  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId String
-  product   Product @relation(fields: [productId], references: [id])
-  quantity  Float
-  unitPrice Float
-  subtotal  Float
+  id            String    @id @default(cuid())
+  orderId       String
+  order         Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId     String
+  product       Product   @relation(fields: [productId], references: [id])
+  category      String?
+  specification String?
+  unit          String?
+  quantity      Float
+  weightKg      Float?
+  market        String?
+  deliveryDate  DateTime?
+  unitPrice     Float
+  subtotal      Float
 
   @@index([orderId])
   @@index([productId])
@@ -298,4 +304,12 @@ model OrderPayment {
 
   @@index([orderId])
   @@map("order_payments")
+}
+
+model ContainerType {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+
+  @@map("container_types")
 }

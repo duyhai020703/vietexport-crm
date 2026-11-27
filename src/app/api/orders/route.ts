@@ -5,6 +5,11 @@ import {
   isManagerOrAdmin,
   isSalesAdminOrAbove,
 } from "@/lib/auth";
+import {
+  ORDER_ITEM_PRODUCT_SELECT,
+  prepareOrderItems,
+  type OrderItemInput,
+} from "@/lib/order-helpers";
 import type {
   Incoterm,
   OrderStatus,
@@ -42,6 +47,7 @@ export async function GET(req: NextRequest) {
     const search = searchParams.get("search")?.trim();
     const status = searchParams.get("status")?.trim();
     const salesRepIdParam = searchParams.get("salesRepId")?.trim();
+    const customerIdParam = searchParams.get("customerId")?.trim();
 
     const where: Prisma.OrderWhereInput = {};
 
@@ -50,6 +56,10 @@ export async function GET(req: NextRequest) {
       where.salesRepId = currentUser.id;
     } else if (salesRepIdParam && salesRepIdParam !== "ALL") {
       where.salesRepId = salesRepIdParam;
+    }
+
+    if (customerIdParam) {
+      where.customerId = customerIdParam;
     }
 
     if (status && status !== "ALL") {
@@ -81,14 +91,7 @@ export async function GET(req: NextRequest) {
         items: {
           include: {
             product: {
-              select: {
-                id: true,
-                sku: true,
-                name: true,
-                unit: true,
-                netWeightGrams: true,
-                packsPerCarton: true,
-              },
+              select: ORDER_ITEM_PRODUCT_SELECT,
             },
           },
         },
@@ -109,12 +112,6 @@ export async function GET(req: NextRequest) {
   }
 }
 
-interface OrderItemInput {
-  productId: string;
-  quantity: number;
-  unitPrice: number;
-}
-
 export async function POST(req: NextRequest) {
   try {
     const currentUser = await getCurrentUser();
@@ -126,6 +123,7 @@ export async function POST(req: NextRequest) {
     const {
       customerId,
       poNumber,
+      productionOrderNo,
       orderType = "STANDARD",
       incoterm = "FOB",
       orderDate,
@@ -134,12 +132,15 @@ export async function POST(req: NextRequest) {
       etd,
       eta,
       containerCount = 1,
+      containerType,
       status = "CONFIRMED",
+      paymentStatus,
       notes,
       items = [],
     } = body as {
       customerId?: string;
       poNumber?: string;
+      productionOrderNo?: string | null;
       orderType?: OrderType;
       incoterm?: Incoterm;
       orderDate?: string;
@@ -148,8 +149,10 @@ export async function POST(req: NextRequest) {
       etd?: string;
       eta?: string;
       containerCount?: number;
+      containerType?: string | null;
       status?: OrderStatus;
-      notes?: string;
+      paymentStatus?: string | null;
+      notes?: string | null;
       items?: OrderItemInput[];
     };
 
@@ -192,70 +195,67 @@ export async function POST(req: NextRequest) {
     const parsedDate = orderDate ? new Date(orderDate) : new Date();
     const orderCode = await generateNextOrderCode(parsedDate);
 
-    const preparedItems = items.map((item) => {
-      const qty = Number(item.quantity);
-      const price = Number(item.unitPrice);
-      if (!item.productId || isNaN(qty) || qty <= 0 || isNaN(price) || price < 0) {
-        throw new Error("INVALID_ITEM");
-      }
-      return {
-        productId: item.productId,
-        quantity: qty,
-        unitPrice: price,
-        subtotal: Number((qty * price).toFixed(2)),
-      };
-    });
+    const preparedItems = prepareOrderItems(items);
 
     const totalAmount = Number(
       preparedItems.reduce((sum, item) => sum + item.subtotal, 0).toFixed(2)
     );
 
-    const order = await prisma.order.create({
-      data: {
-        orderCode,
-        poNumber: poNumber?.trim() || null,
-        customerId,
-        salesRepId: customer.salesRepId,
-        orderType,
-        incoterm,
-        orderDate: parsedDate,
-        contractDate: contractDate ? new Date(contractDate) : parsedDate,
-        estProductionDate: estProductionDate ? new Date(estProductionDate) : null,
-        etd: etd ? new Date(etd) : null,
-        eta: eta ? new Date(eta) : null,
-        containerCount: Number(containerCount) || 1,
-        status,
-        totalAmount,
-        notes: notes?.trim() || null,
-        items: { create: preparedItems },
-      },
-      include: {
-        customer: {
-          select: {
-            id: true,
-            customerCode: true,
-            companyName: true,
-            countryRegion: true,
-            portOfDestination: true,
-          },
+    const trimmedContainerType = containerType?.trim() || null;
+
+    const order = await prisma.$transaction(async (tx) => {
+      if (trimmedContainerType) {
+        await tx.containerType.upsert({
+          where: { name: trimmedContainerType },
+          update: {},
+          create: { name: trimmedContainerType },
+        });
+      }
+
+      return tx.order.create({
+        data: {
+          orderCode,
+          poNumber: poNumber?.trim() || null,
+          productionOrderNo: productionOrderNo?.trim() || null,
+          customerId,
+          salesRepId: customer.salesRepId,
+          orderType,
+          incoterm,
+          orderDate: parsedDate,
+          contractDate: contractDate ? new Date(contractDate) : parsedDate,
+          estProductionDate: estProductionDate ? new Date(estProductionDate) : null,
+          etd: etd ? new Date(etd) : null,
+          eta: eta ? new Date(eta) : null,
+          containerCount: Number(containerCount) || 1,
+          containerType: trimmedContainerType,
+          status,
+          paymentStatus:
+            status === "COMPLETED" ? paymentStatus?.trim() || null : null,
+          totalAmount,
+          notes: notes?.trim() || null,
+          items: { create: preparedItems },
         },
-        salesRep: { select: { id: true, name: true, role: true } },
-        items: {
-          include: {
-            product: {
-              select: {
-                id: true,
-                sku: true,
-                name: true,
-                unit: true,
-                netWeightGrams: true,
-                packsPerCarton: true,
+        include: {
+          customer: {
+            select: {
+              id: true,
+              customerCode: true,
+              companyName: true,
+              countryRegion: true,
+              portOfDestination: true,
+            },
+          },
+          salesRep: { select: { id: true, name: true, role: true } },
+          items: {
+            include: {
+              product: {
+                select: ORDER_ITEM_PRODUCT_SELECT,
               },
             },
           },
+          payments: true,
         },
-        payments: true,
-      },
+      });
     });
 
     return NextResponse.json({ order }, { status: 201 });

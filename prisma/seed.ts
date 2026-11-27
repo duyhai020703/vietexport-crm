@@ -73,6 +73,7 @@ async function main() {
       data: {
         sku: "SKU-BT22-300",
         name: "Bánh tráng siêu mỏng 22cm 300g",
+        category: "Siêu Mỏng",
         specification: "40 gói/thùng • Túi PA/PE hút chân không",
         unit: "Thùng",
         netWeightGrams: 300,
@@ -90,6 +91,7 @@ async function main() {
       data: {
         sku: "SKU-BT16-200",
         name: "Bánh tráng tròn 16cm 200g",
+        category: "Cuốn",
         specification: "50 gói/thùng • Nhãn phụ đa ngôn ngữ",
         unit: "Thùng",
         netWeightGrams: 200,
@@ -107,6 +109,7 @@ async function main() {
       data: {
         sku: "SKU-BT22-120",
         name: "Bánh tráng không nhúng nước 120g",
+        category: "Đa nem",
         specification: "60 gói/thùng • Tiện lợi ăn liền",
         unit: "Thùng",
         netWeightGrams: 120,
@@ -124,6 +127,7 @@ async function main() {
       data: {
         sku: "SKU-OEM-V22",
         name: "Bánh tráng OEM 22x22cm 250g",
+        category: "OEM",
         specification: "48 gói/thùng • Túi zip theo thiết kế khách",
         unit: "Thùng",
         netWeightGrams: 250,
@@ -141,6 +145,7 @@ async function main() {
       data: {
         sku: "SKU-BT-CHILI-150",
         name: "Bánh tráng trộn vị Tỏi Ớt 150g",
+        category: "Trộn / Gia vị",
         specification: "40 gói/thùng • Đạt chuẩn FDA / HACCP",
         unit: "Thùng",
         netWeightGrams: 150,
@@ -226,7 +231,7 @@ async function main() {
       channel: "OEM" as const,
       source: "B2B_PLATFORM" as const,
       salesRepId: sale2.id,
-      pipelineStage: "SAMPLE_SENT" as const,
+      pipelineStage: "QUOTED" as const,
       // Quá 7 ngày không cập nhật -> kích hoạt cảnh báo đỏ cho Trưởng phòng!
       lastActivityAt: daysAgo(9),
       nextFollowUpDate: daysAgo(1),
@@ -331,7 +336,7 @@ async function main() {
       channel: "SUPERMARKET" as const,
       source: "REFERRAL" as const,
       salesRepId: sale1.id,
-      pipelineStage: "INQUIRY_QUALIFIED" as const,
+      pipelineStage: "NEW_LEAD" as const,
       lastActivityAt: daysAgo(2),
       nextFollowUpDate: daysAhead(1),
       contacts: [
@@ -383,7 +388,7 @@ async function main() {
       channel: "DISTRIBUTOR" as const,
       source: "WEBSITE" as const,
       salesRepId: sale2.id,
-      pipelineStage: "CONTACTED" as const,
+      pipelineStage: "NEW_LEAD" as const,
       lastActivityAt: daysAgo(3),
       nextFollowUpDate: daysAhead(4),
       contacts: [
@@ -429,7 +434,7 @@ async function main() {
       channel: "DISTRIBUTOR" as const,
       source: "TRADE_FAIR" as const,
       salesRepId: sale2.id,
-      pipelineStage: "DORMANT" as const,
+      pipelineStage: "ACTIVE_WON" as const,
       lastActivityAt: daysAgo(110),
       nextFollowUpDate: daysAhead(0),
       contacts: [

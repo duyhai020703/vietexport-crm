@@ -79,7 +79,7 @@ export default function AppShell({ children, onUserChanged }: AppShellProps) {
               <img
                 src="/logo.png"
                 alt="TanNhienExport-CRM"
-                className="w-8 h-8 rounded-lg object-contain bg-white border border-[#E5EAF2] p-0.5 shrink-0"
+                className="w-8 h-8 object-contain shrink-0"
               />
               <div className="leading-tight">
                 <span className="font-bold text-slate-800 text-xs sm:text-sm tracking-tight block truncate max-w-[140px] sm:max-w-none">

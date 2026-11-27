@@ -355,6 +355,7 @@ export default function CrmHomePage() {
         ) : (
           <CustomerListView
             customers={customers}
+            canDelete={isManagerOrAdmin}
             onEdit={(c) => {
               setEditingCustomer(c);
               setFormOpen(true);

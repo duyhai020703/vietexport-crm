@@ -9,6 +9,7 @@ import {
   X,
 } from "lucide-react";
 import type {
+  CustomerActivityDTO,
   CustomerContactDTO,
   CustomerDTO,
   UserDTO,
@@ -69,6 +70,13 @@ export default function CustomerFormModal({
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
+  // Activity Log state
+  const [activities, setActivities] = useState<CustomerActivityDTO[]>([]);
+  const [actChannel, setActChannel] = useState("Email");
+  const [actSummary, setActSummary] = useState("");
+  const [actFollowUp, setActFollowUp] = useState("");
+  const [actSaving, setActSaving] = useState(false);
+
   useEffect(() => {
     if (!open) return;
     setError("");
@@ -92,6 +100,13 @@ export default function CustomerFormModal({
               isPrimary: c.isPrimary,
             }))
           : [{ ...EMPTY_CONTACT }]
+      );
+      setActivities(customer.activities ?? []);
+      setActSummary("");
+      setActFollowUp(
+        customer.nextFollowUpDate
+          ? customer.nextFollowUpDate.slice(0, 10)
+          : ""
       );
     } else {
       setCompanyName("");
@@ -228,6 +243,30 @@ export default function CustomerFormModal({
       setError("Lỗi kết nối máy chủ.");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleAddActivity() {
+    if (!customer || !actSummary.trim()) return;
+    setActSaving(true);
+    try {
+      const res = await fetch(`/api/customers/${customer.id}/activities`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          channel: actChannel,
+          summary: actSummary.trim(),
+          nextFollowUpDate: actFollowUp || null,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.activity) {
+        setActivities((prev) => [data.activity, ...prev]);
+        setActSummary("");
+        onSaved();
+      }
+    } finally {
+      setActSaving(false);
     }
   }
 
@@ -520,6 +559,94 @@ export default function CustomerFormModal({
               ))}
             </div>
           </div>
+
+          {/* Activity Log (Nhật ký tương tác & Hẹn chăm sóc theo BRD) */}
+          {isEdit && (
+            <div className="border-t border-slate-200 pt-4 space-y-3">
+              <div>
+                <h3 className="text-sm font-semibold text-slate-900">
+                  Nhật ký tương tác (Activity Log) &amp; Lịch hẹn chăm sóc
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Ghi nhận trao đổi mới để cập nhật trạng thái và đặt lịch Next Follow-up
+                </p>
+              </div>
+
+              <div className="p-3 rounded-lg border border-slate-200 bg-slate-50/70 space-y-2.5">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                  <select
+                    value={actChannel}
+                    onChange={(e) => setActChannel(e.target.value)}
+                    className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
+                  >
+                    <option value="Email">Email</option>
+                    <option value="WhatsApp">WhatsApp</option>
+                    <option value="WeChat">WeChat</option>
+                    <option value="Call">Gọi điện</option>
+                    <option value="Meeting">Họp / Hội chợ</option>
+                  </select>
+                  <div className="sm:col-span-2 flex items-center gap-2">
+                    <span className="text-xs text-slate-500 whitespace-nowrap">
+                      Hẹn chăm sóc:
+                    </span>
+                    <input
+                      type="date"
+                      value={actFollowUp}
+                      onChange={(e) => setActFollowUp(e.target.value)}
+                      className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={actSummary}
+                    onChange={(e) => setActSummary(e.target.value)}
+                    placeholder="Tóm tắt nội dung trao đổi (VD: Đã gửi báo giá FOB, hẹn follow-up 30/11)..."
+                    className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    disabled={actSaving || !actSummary.trim()}
+                    onClick={handleAddActivity}
+                    className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[#1677FF] text-white hover:bg-[#0E63DB] disabled:opacity-50 shrink-0"
+                  >
+                    {actSaving ? "Đang lưu..." : "Ghi nhật ký"}
+                  </button>
+                </div>
+              </div>
+
+              {activities.length > 0 && (
+                <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+                  {activities.map((act) => (
+                    <div
+                      key={act.id}
+                      className="text-xs bg-white border border-slate-200 rounded-lg px-3 py-2 flex items-start justify-between gap-3"
+                    >
+                      <div>
+                        <span className="font-semibold text-[#1677FF]">
+                          [{act.channel}]
+                        </span>{" "}
+                        <span className="text-slate-800">{act.summary}</span>
+                        <div className="text-[11px] text-slate-400 mt-0.5">
+                          {act.user?.name ?? "Sale"} •{" "}
+                          {new Date(act.createdAt).toLocaleString("vi-VN")}
+                        </div>
+                      </div>
+                      {act.nextFollowUpDate && (
+                        <span className="shrink-0 px-2 py-0.5 rounded bg-amber-50 text-amber-700 font-medium text-[11px]">
+                          Hẹn:{" "}
+                          {new Date(act.nextFollowUpDate).toLocaleDateString(
+                            "vi-VN"
+                          )}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
             <button

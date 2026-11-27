@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getCurrentUser, isManagerOrAdmin } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
   try {
+    const currentUser = await getCurrentUser();
     const { searchParams } = new URL(req.url);
     const search = searchParams.get("search")?.trim();
 
-    const products = await prisma.product.findMany({
+    const rawProducts = await prisma.product.findMany({
       where: search
         ? {
             OR: [
@@ -17,6 +19,15 @@ export async function GET(req: NextRequest) {
           }
         : undefined,
       orderBy: { sku: "asc" },
+    });
+
+    // BRD: Chỉ Trưởng phòng (Admin/Manager) được thấy giá vốn/giá sàn
+    const canSeeCost = currentUser ? isManagerOrAdmin(currentUser.role) : false;
+    const products = rawProducts.map((p) => {
+      if (canSeeCost) return p;
+      const { costPrice: _hidden, ...rest } = p;
+      void _hidden;
+      return rest;
     });
 
     return NextResponse.json({ products });
@@ -32,11 +43,33 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { sku, name, specification, unit, basePrice } = body as {
+    const {
+      sku,
+      name,
+      specification,
+      unit,
+      netWeightGrams = 300,
+      packsPerCarton = 40,
+      cartonDimensions,
+      cbm,
+      capacity20ft,
+      capacity40hc,
+      costPrice = 0,
+      minMarginPercent = 15,
+      basePrice,
+    } = body as {
       sku?: string;
       name?: string;
       specification?: string;
       unit?: string;
+      netWeightGrams?: number;
+      packsPerCarton?: number;
+      cartonDimensions?: string;
+      cbm?: number | null;
+      capacity20ft?: number | null;
+      capacity40hc?: number | null;
+      costPrice?: number;
+      minMarginPercent?: number;
       basePrice?: number;
     };
 
@@ -64,6 +97,20 @@ export async function POST(req: NextRequest) {
         name: name.trim(),
         specification: specification?.trim() || null,
         unit: unit.trim(),
+        netWeightGrams: Number(netWeightGrams) || 300,
+        packsPerCarton: Number(packsPerCarton) || 40,
+        cartonDimensions: cartonDimensions?.trim() || null,
+        cbm: cbm !== undefined && cbm !== null ? Number(cbm) : null,
+        capacity20ft:
+          capacity20ft !== undefined && capacity20ft !== null
+            ? Number(capacity20ft)
+            : null,
+        capacity40hc:
+          capacity40hc !== undefined && capacity40hc !== null
+            ? Number(capacity40hc)
+            : null,
+        costPrice: Number(costPrice) || 0,
+        minMarginPercent: Number(minMarginPercent) || 15,
         basePrice: Number(basePrice),
       },
     });
@@ -77,4 +124,3 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-

@@ -15,9 +15,11 @@ import {
 } from "recharts";
 import {
   DollarSign,
-  TrendingUp,
-  UserPlus,
-  ShoppingBag,
+  Download,
+  Printer,
+  Scale,
+  Ship,
+  WalletCards,
 } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import type { UserDTO } from "@/types/crm";
@@ -31,6 +33,9 @@ interface DashboardData {
     conversionRate: number;
     monthlyRevenue: number;
     monthlyOrdersCount: number;
+    totalTons: number;
+    totalContainers: number;
+    totalUnpaidDebt: number;
   };
   skuStats: {
     productId: string;
@@ -38,8 +43,16 @@ interface DashboardData {
     name: string;
     unit: string;
     totalQuantity: number;
+    totalTons: number;
     totalRevenue: number;
     orderCount: number;
+  }[];
+  countryRanking: {
+    countryRegion: string;
+    orderCount: number;
+    totalTons: number;
+    totalRevenue: number;
+    sharePercent: number;
   }[];
   pipelineDistribution: {
     stage: string;
@@ -47,25 +60,27 @@ interface DashboardData {
     viLabel: string;
     count: number;
   }[];
-  countryDistribution: {
-    countryRegion: string;
+  lostReasonDistribution: {
+    reason: string;
     count: number;
   }[];
 }
 
 const PIE_COLORS = [
-  "#2563eb",
-  "#10b981",
-  "#f59e0b",
-  "#8b5cf6",
-  "#ec4899",
-  "#06b6d4",
+  "#1677FF",
+  "#10B981",
+  "#F59E0B",
+  "#EF4444",
+  "#8B5CF6",
+  "#06B6D4",
 ];
 
 export default function DashboardPage() {
   const [month, setMonth] = useState(11);
   const [year, setYear] = useState(2026);
   const [salesRepId, setSalesRepId] = useState("ALL");
+  const [dateMode, setDateMode] = useState<"ORDER_DATE" | "ETD">("ORDER_DATE");
+  const [orderType, setOrderType] = useState<"ALL" | "STANDARD" | "OEM">("ALL");
 
   useEffect(() => {
     const now = new Date();
@@ -94,6 +109,8 @@ export default function DashboardPage() {
         month: String(month),
         year: String(year),
         salesRepId,
+        dateMode,
+        orderType,
       });
       const res = await fetch(`/api/dashboard?${params.toString()}`);
       const json = await res.json();
@@ -101,7 +118,7 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  }, [month, year, salesRepId]);
+  }, [month, year, salesRepId, dateMode, orderType]);
 
   useEffect(() => {
     loadUsers();
@@ -111,8 +128,34 @@ export default function DashboardPage() {
     loadDashboard();
   }, [loadDashboard]);
 
+  function exportCsv() {
+    if (!data) return;
+    const rows = [
+      ["SKU", "Ten San Pham", "So Thung", "San Luong (Tan)", "Doanh Thu (USD)"],
+      ...data.skuStats.map((s) => [
+        s.sku,
+        `"${s.name}"`,
+        String(s.totalQuantity),
+        String(s.totalTons),
+        String(s.totalRevenue),
+      ]),
+    ];
+    const csv = rows.map((r) => r.join(",")).join("\n");
+    const blob = new Blob(["\uFEFF" + csv], {
+      type: "text/csv;charset=utf-8;",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `BaoCao_XuatKhau_T${month}_${year}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   const isManagerOrAdmin =
-    currentUser?.role === "ADMIN" || currentUser?.role === "MANAGER";
+    currentUser?.role === "ADMIN" ||
+    currentUser?.role === "MANAGER" ||
+    currentUser?.role === "SALES_ADMIN";
 
   return (
     <AppShell
@@ -124,21 +167,32 @@ export default function DashboardPage() {
     >
       <div className="space-y-5">
         {/* Header & Filters */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
           <div>
             <h1 className="text-xl font-bold text-slate-900">
-              Báo cáo & Thống kê Kinh doanh Xuất khẩu
+              Báo cáo Tổng hợp &amp; Phân tích Xuất khẩu (Dashboard)
             </h1>
             <p className="text-sm text-slate-500">
-              Tổng hợp sản lượng, doanh thu theo mã hàng (SKU) và hiệu suất chuyển đổi Pipeline
+              Tự động quy đổi Sản lượng Tấn (MT), số Container, Công nợ và Xếp hạng Thị trường / SKU
             </p>
           </div>
 
-          <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full lg:w-auto">
+            <select
+              value={dateMode}
+              onChange={(e) =>
+                setDateMode(e.target.value as "ORDER_DATE" | "ETD")
+              }
+              className="col-span-2 sm:col-span-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium focus:border-[#1677FF] focus:outline-none"
+            >
+              <option value="ORDER_DATE">Mốc: Ngày ký HĐ (KPI Sale)</option>
+              <option value="ETD">Mốc: Ngày tàu chạy (ETD)</option>
+            </select>
+
             <select
               value={month}
               onChange={(e) => setMonth(Number(e.target.value))}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium focus:border-[#1677FF] focus:outline-none w-full sm:w-auto"
+              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium focus:border-[#1677FF] focus:outline-none"
             >
               {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
                 <option key={m} value={m}>
@@ -150,7 +204,7 @@ export default function DashboardPage() {
             <select
               value={year}
               onChange={(e) => setYear(Number(e.target.value))}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium focus:border-[#1677FF] focus:outline-none w-full sm:w-auto"
+              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium focus:border-[#1677FF] focus:outline-none"
             >
               {[year - 1, year, year + 1].map((y) => (
                 <option key={y} value={y}>
@@ -159,11 +213,23 @@ export default function DashboardPage() {
               ))}
             </select>
 
+            <select
+              value={orderType}
+              onChange={(e) =>
+                setOrderType(e.target.value as "ALL" | "STANDARD" | "OEM")
+              }
+              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium focus:border-[#1677FF] focus:outline-none"
+            >
+              <option value="ALL">Standard &amp; OEM</option>
+              <option value="STANDARD">Chỉ Standard</option>
+              <option value="OEM">Chỉ OEM</option>
+            </select>
+
             {isManagerOrAdmin && (
               <select
                 value={salesRepId}
                 onChange={(e) => setSalesRepId(e.target.value)}
-                className="col-span-2 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium focus:border-[#1677FF] focus:outline-none w-full sm:w-auto"
+                className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium focus:border-[#1677FF] focus:outline-none"
               >
                 <option value="ALL">Tất cả Sale</option>
                 {users.map((u) => (
@@ -173,73 +239,92 @@ export default function DashboardPage() {
                 ))}
               </select>
             )}
+
+            <button
+              type="button"
+              onClick={exportCsv}
+              className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-white border border-[#E5EAF2] text-slate-700 hover:bg-slate-50"
+            >
+              <Download className="w-4 h-4" />
+              Excel/CSV
+            </button>
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-white border border-[#E5EAF2] text-slate-700 hover:bg-slate-50"
+            >
+              <Printer className="w-4 h-4" />
+              PDF
+            </button>
           </div>
         </div>
 
-        {/* KPI Cards */}
+        {/* 4 BRD KPI Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="bg-white rounded-xl border border-[#E5EAF2] p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
             <div className="flex items-center justify-between text-slate-500 text-xs font-medium mb-2">
-              <span>KHÁCH HÀNG MỚI (THÁNG {month})</span>
-              <UserPlus className="w-4 h-4 text-[#1677FF]" />
-            </div>
-            <div className="text-2xl font-bold text-slate-900 tabular-nums">
-              {loading ? "..." : data?.kpis.newCustomersCount ?? 0}
-            </div>
-            <div className="text-xs text-slate-500 mt-1">
-              Tổng danh sách: {data?.kpis.totalCustomersCount ?? 0} khách
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl border border-[#E5EAF2] p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
-            <div className="flex items-center justify-between text-slate-500 text-xs font-medium mb-2">
-              <span>TỶ LỆ CHUYỂN ĐỔI (ACTIVE / WON)</span>
-              <TrendingUp className="w-4 h-4 text-[#059669]" />
-            </div>
-            <div className="text-2xl font-bold text-[#059669] tabular-nums">
-              {loading ? "..." : `${data?.kpis.conversionRate ?? 0}%`}
-            </div>
-            <div className="text-xs text-slate-500 mt-1">
-              {data?.kpis.wonCustomersCount ?? 0} khách đã chốt đơn
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl border border-[#E5EAF2] p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
-            <div className="flex items-center justify-between text-slate-500 text-xs font-medium mb-2">
-              <span>DOANH THU THÁNG {month}/{year}</span>
+              <span>TỔNG DOANH THU (T{month}/{year})</span>
               <DollarSign className="w-4 h-4 text-[#1677FF]" />
             </div>
             <div className="text-2xl font-bold text-slate-900 tabular-nums">
               {loading ? "..." : formatUSD(data?.kpis.monthlyRevenue ?? 0)}
             </div>
             <div className="text-xs text-slate-500 mt-1">
-              Từ các đơn Confirmed / Shipped / Completed
+              Tỷ lệ chốt CRM: {data?.kpis.conversionRate ?? 0}% ({data?.kpis.wonCustomersCount ?? 0} Won)
             </div>
           </div>
 
           <div className="bg-white rounded-xl border border-[#E5EAF2] p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
             <div className="flex items-center justify-between text-slate-500 text-xs font-medium mb-2">
-              <span>SỐ ĐƠN THÀNH CÔNG</span>
-              <ShoppingBag className="w-4 h-4 text-[#D97706]" />
+              <span>TỔNG SẢN LƯỢNG (TẤN / MT)</span>
+              <Scale className="w-4 h-4 text-[#059669]" />
             </div>
-            <div className="text-2xl font-bold text-slate-900 tabular-nums">
-              {loading ? "..." : data?.kpis.monthlyOrdersCount ?? 0}
+            <div className="text-2xl font-bold text-[#059669] tabular-nums">
+              {loading ? "..." : `${formatNumber(data?.kpis.totalTons ?? 0)} Tấn`}
             </div>
             <div className="text-xs text-slate-500 mt-1">
-              Đơn hàng phát sinh trong tháng {month}
+              Quy đổi từ Net Weight × Số gói/thùng
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl border border-[#E5EAF2] p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
+            <div className="flex items-center justify-between text-slate-500 text-xs font-medium mb-2">
+              <span>ĐƠN HÀNG / CONTAINER</span>
+              <Ship className="w-4 h-4 text-[#1677FF]" />
+            </div>
+            <div className="text-2xl font-bold text-slate-900 tabular-nums">
+              {loading
+                ? "..."
+                : `${data?.kpis.monthlyOrdersCount ?? 0} đơn / ${data?.kpis.totalContainers ?? 0} cont`}
+            </div>
+            <div className="text-xs text-slate-500 mt-1">
+              Khách mới tháng {month}: {data?.kpis.newCustomersCount ?? 0}
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl border border-[#E5EAF2] p-4 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
+            <div className="flex items-center justify-between text-slate-500 text-xs font-medium mb-2">
+              <span>TỔNG CÔNG NỢ CHƯA THU</span>
+              <WalletCards className="w-4 h-4 text-[#D97706]" />
+            </div>
+            <div className="text-2xl font-bold text-[#D97706] tabular-nums">
+              {loading ? "..." : formatUSD(data?.kpis.totalUnpaidDebt ?? 0)}
+            </div>
+            <div className="text-xs text-slate-500 mt-1">
+              Tổng công nợ còn lại các đơn đang chạy
             </div>
           </div>
         </div>
 
-        {/* SKU Table & Chart */}
+        {/* SKU Ranking & Country Ranking */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
           <div className="lg:col-span-7 bg-white rounded-xl border border-[#E5EAF2] shadow-[0_1px_3px_rgba(15,23,42,0.03)] overflow-hidden flex flex-col">
             <div className="px-5 py-4 border-b border-[#E5EAF2]">
               <h2 className="text-base font-bold text-slate-900">
-                Thống kê Sản lượng & Doanh thu theo Mã hàng (SKU)
+                Xếp hạng Mã hàng (SKU) bán chạy nhất
               </h2>
               <p className="text-xs text-slate-500">
-                Tổng hợp từ các đơn hàng thành công trong tháng {month}/{year}
+                Số thùng, Sản lượng quy đổi (Tấn) và Doanh thu trong tháng {month}/{year}
               </p>
             </div>
             <div className="overflow-x-auto flex-1">
@@ -248,15 +333,16 @@ export default function DashboardPage() {
                   <tr className="bg-[#F8FAFC] border-b border-[#E5EAF2] text-xs font-semibold text-slate-500 uppercase">
                     <th className="py-2.5 px-4">SKU</th>
                     <th className="py-2.5 px-4">Tên sản phẩm</th>
-                    <th className="py-2.5 px-4 text-right">Tổng sản lượng</th>
-                    <th className="py-2.5 px-4 text-right">Tổng doanh thu</th>
+                    <th className="py-2.5 px-4 text-right">Số thùng</th>
+                    <th className="py-2.5 px-4 text-right">Sản lượng (Tấn)</th>
+                    <th className="py-2.5 px-4 text-right">Doanh thu</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#EEF2F7] text-sm">
                   {!data || data.skuStats.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={4}
+                        colSpan={5}
                         className="py-8 text-center text-slate-500 text-sm"
                       >
                         Không có dữ liệu xuất khẩu trong tháng {month}/{year}.
@@ -273,8 +359,11 @@ export default function DashboardPage() {
                         <td className="py-2.5 px-4 font-medium text-slate-900">
                           {row.name}
                         </td>
+                        <td className="py-2.5 px-4 text-right text-slate-700 whitespace-nowrap tabular-nums">
+                          {formatNumber(row.totalQuantity)}
+                        </td>
                         <td className="py-2.5 px-4 text-right font-semibold text-slate-800 whitespace-nowrap tabular-nums">
-                          {formatNumber(row.totalQuantity)} {row.unit}
+                          {formatNumber(row.totalTons)} Tấn
                         </td>
                         <td className="py-2.5 px-4 text-right font-bold text-[#059669] whitespace-nowrap tabular-nums">
                           {formatUSD(row.totalRevenue)}
@@ -287,58 +376,69 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="lg:col-span-5 bg-white rounded-xl border border-[#E5EAF2] p-5 shadow-[0_1px_3px_rgba(15,23,42,0.03)] flex flex-col">
-            <h2 className="text-base font-bold text-slate-900 mb-1">
-              Biểu đồ Doanh thu theo Mã hàng (USD)
-            </h2>
-            <p className="text-xs text-slate-500 mb-4">
-              So sánh đóng góp doanh thu từng SKU
-            </p>
-            <div className="h-[280px] w-full">
-              {data && data.skuStats.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={data.skuStats}
-                    margin={{ top: 10, right: 10, left: 10, bottom: 20 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                    <XAxis
-                      dataKey="sku"
-                      tick={{ fontSize: 11, fill: "#475569" }}
-                      angle={-15}
-                      textAnchor="end"
-                    />
-                    <YAxis tick={{ fontSize: 11, fill: "#475569" }} />
-                    <Tooltip
-                      formatter={(val) => formatUSD(Number(val ?? 0))}
-                    />
-                    <Bar
-                      dataKey="totalRevenue"
-                      name="Doanh thu"
-                      fill="#1677FF"
-                      radius={[6, 6, 0, 0]}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="h-full flex items-center justify-center text-sm text-slate-400">
-                  Chưa có dữ liệu biểu đồ tháng này
-                </div>
-              )}
+          <div className="lg:col-span-5 bg-white rounded-xl border border-[#E5EAF2] shadow-[0_1px_3px_rgba(15,23,42,0.03)] overflow-hidden flex flex-col">
+            <div className="px-5 py-4 border-b border-[#E5EAF2]">
+              <h2 className="text-base font-bold text-slate-900">
+                Xếp hạng Thị trường theo Quốc gia
+              </h2>
+              <p className="text-xs text-slate-500">
+                Thống kê số đơn, sản lượng Tấn và tỷ trọng doanh thu
+              </p>
+            </div>
+            <div className="overflow-x-auto flex-1">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-[#F8FAFC] border-b border-[#E5EAF2] text-xs font-semibold text-slate-500 uppercase">
+                    <th className="py-2.5 px-4">Thị trường</th>
+                    <th className="py-2.5 px-4 text-right">Đơn</th>
+                    <th className="py-2.5 px-4 text-right">Tấn</th>
+                    <th className="py-2.5 px-4 text-right">Doanh thu (%)</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#EEF2F7] text-sm">
+                  {!data || data.countryRanking.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={4}
+                        className="py-8 text-center text-slate-500 text-sm"
+                      >
+                        Chưa có đơn hàng trong kỳ.
+                      </td>
+                    </tr>
+                  ) : (
+                    data.countryRanking.map((c) => (
+                      <tr key={c.countryRegion} className="hover:bg-[#F8FAFC]">
+                        <td className="py-2.5 px-4 font-semibold text-slate-900">
+                          {c.countryRegion}
+                        </td>
+                        <td className="py-2.5 px-4 text-right tabular-nums">
+                          {c.orderCount}
+                        </td>
+                        <td className="py-2.5 px-4 text-right tabular-nums">
+                          {formatNumber(c.totalTons)}
+                        </td>
+                        <td className="py-2.5 px-4 text-right font-bold text-[#1677FF] whitespace-nowrap tabular-nums">
+                          {formatUSD(c.totalRevenue)} ({c.sharePercent}%)
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
 
-        {/* Pipeline & Country Charts */}
+        {/* Pipeline & Lost Reason Pie Chart */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
           <div className="lg:col-span-7 bg-white rounded-xl border border-[#E5EAF2] p-5 shadow-[0_1px_3px_rgba(15,23,42,0.03)]">
             <h2 className="text-base font-bold text-slate-900 mb-1">
-              Phân bổ Khách hàng theo Giai đoạn Pipeline
+              Phân bổ Khách hàng theo 9 giai đoạn Pipeline
             </h2>
             <p className="text-xs text-slate-500 mb-4">
-              Số lượng khách hàng đang ở từng bước trong 9 giai đoạn bán hàng
+              Theo dõi chuyển đổi phễu bán hàng
             </p>
-            <div className="h-[280px] w-full">
+            <div className="h-[260px] w-full">
               {data && (
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
@@ -361,7 +461,7 @@ export default function DashboardPage() {
                     <Bar
                       dataKey="count"
                       name="Số khách hàng"
-                      fill="#10b981"
+                      fill="#1677FF"
                       radius={[6, 6, 0, 0]}
                     />
                   </BarChart>
@@ -372,25 +472,25 @@ export default function DashboardPage() {
 
           <div className="lg:col-span-5 bg-white rounded-xl border border-[#E5EAF2] p-5 shadow-[0_1px_3px_rgba(15,23,42,0.03)]">
             <h2 className="text-base font-bold text-slate-900 mb-1">
-              Phân bổ theo Quốc gia / Khu vực
+              Phân tích Lý do Trượt đơn (Lost Reason)
             </h2>
             <p className="text-xs text-slate-500 mb-4">
-              Tỷ trọng khách hàng xuất khẩu theo thị trường mục tiêu
+              Tổng hợp lý do khách hàng từ chối phục vụ nghiên cứu thị trường
             </p>
-            <div className="h-[280px] w-full flex items-center">
-              {data && data.countryDistribution.length > 0 ? (
+            <div className="h-[260px] w-full flex items-center">
+              {data && data.lostReasonDistribution.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
-                      data={data.countryDistribution}
+                      data={data.lostReasonDistribution}
                       dataKey="count"
-                      nameKey="countryRegion"
+                      nameKey="reason"
                       cx="50%"
                       cy="50%"
-                      outerRadius={90}
+                      outerRadius={85}
                       label={({ name, value }) => `${name} (${value})`}
                     >
-                      {data.countryDistribution.map((_, index) => (
+                      {data.lostReasonDistribution.map((_, index) => (
                         <Cell
                           key={`cell-${index}`}
                           fill={PIE_COLORS[index % PIE_COLORS.length]}
@@ -402,7 +502,7 @@ export default function DashboardPage() {
                 </ResponsiveContainer>
               ) : (
                 <div className="w-full text-center text-sm text-slate-400">
-                  Chưa có dữ liệu quốc gia
+                  Chưa có dữ liệu khách Lost
                 </div>
               )}
             </div>

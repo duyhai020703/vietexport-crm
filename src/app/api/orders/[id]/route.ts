@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, isManagerOrAdmin } from "@/lib/auth";
+import { getCurrentUser, isSalesAdminOrAbove } from "@/lib/auth";
 import type { OrderStatus } from "@/generated/prisma/client";
 
 export async function PATCH(
@@ -24,7 +24,7 @@ export async function PATCH(
     }
 
     if (
-      !isManagerOrAdmin(currentUser.role) &&
+      !isSalesAdminOrAbove(currentUser.role) &&
       existing.salesRepId !== currentUser.id
     ) {
       return NextResponse.json(
@@ -34,11 +34,46 @@ export async function PATCH(
     }
 
     const body = await req.json();
-    const { status, notes, orderDate, items } = body as {
+    const {
+      status,
+      poNumber,
+      contractDate,
+      estProductionDate,
+      actualProductionDate,
+      packagingStatus,
+      qaQcStatus,
+      stuffingDate,
+      etd,
+      eta,
+      docsStatus,
+      dhlTracking,
+      containerCount,
+      notes,
+      orderDate,
+      items,
+    } = body as {
       status?: OrderStatus;
-      notes?: string;
+      poNumber?: string | null;
+      contractDate?: string | null;
+      estProductionDate?: string | null;
+      actualProductionDate?: string | null;
+      packagingStatus?: string | null;
+      qaQcStatus?: string | null;
+      stuffingDate?: string | null;
+      etd?: string | null;
+      eta?: string | null;
+      docsStatus?: string | null;
+      dhlTracking?: string | null;
+      containerCount?: number;
+      notes?: string | null;
       orderDate?: string;
       items?: { productId: string; quantity: number; unitPrice: number }[];
+    };
+
+    const parseDateOrNull = (val: string | null | undefined) => {
+      if (val === undefined) return undefined;
+      if (!val) return null;
+      return new Date(val);
     };
 
     const updated = await prisma.$transaction(async (tx) => {
@@ -67,6 +102,36 @@ export async function PATCH(
         where: { id },
         data: {
           ...(status !== undefined ? { status } : {}),
+          ...(poNumber !== undefined ? { poNumber: poNumber?.trim() || null } : {}),
+          ...(contractDate !== undefined
+            ? { contractDate: parseDateOrNull(contractDate) }
+            : {}),
+          ...(estProductionDate !== undefined
+            ? { estProductionDate: parseDateOrNull(estProductionDate) }
+            : {}),
+          ...(actualProductionDate !== undefined
+            ? { actualProductionDate: parseDateOrNull(actualProductionDate) }
+            : {}),
+          ...(packagingStatus !== undefined
+            ? { packagingStatus: packagingStatus?.trim() || null }
+            : {}),
+          ...(qaQcStatus !== undefined
+            ? { qaQcStatus: qaQcStatus?.trim() || null }
+            : {}),
+          ...(stuffingDate !== undefined
+            ? { stuffingDate: parseDateOrNull(stuffingDate) }
+            : {}),
+          ...(etd !== undefined ? { etd: parseDateOrNull(etd) } : {}),
+          ...(eta !== undefined ? { eta: parseDateOrNull(eta) } : {}),
+          ...(docsStatus !== undefined
+            ? { docsStatus: docsStatus?.trim() || null }
+            : {}),
+          ...(dhlTracking !== undefined
+            ? { dhlTracking: dhlTracking?.trim() || null }
+            : {}),
+          ...(containerCount !== undefined
+            ? { containerCount: Number(containerCount) || 1 }
+            : {}),
           ...(notes !== undefined ? { notes: notes?.trim() || null } : {}),
           ...(orderDate !== undefined ? { orderDate: new Date(orderDate) } : {}),
           totalAmount,
@@ -85,10 +150,18 @@ export async function PATCH(
           items: {
             include: {
               product: {
-                select: { id: true, sku: true, name: true, unit: true },
+                select: {
+                  id: true,
+                  sku: true,
+                  name: true,
+                  unit: true,
+                  netWeightGrams: true,
+                  packsPerCarton: true,
+                },
               },
             },
           },
+          payments: { orderBy: { createdAt: "asc" } },
         },
       });
     });
@@ -124,7 +197,7 @@ export async function DELETE(
     }
 
     if (
-      !isManagerOrAdmin(currentUser.role) &&
+      !isSalesAdminOrAbove(currentUser.role) &&
       existing.salesRepId !== currentUser.id
     ) {
       return NextResponse.json(
@@ -143,4 +216,3 @@ export async function DELETE(
     );
   }
 }
-

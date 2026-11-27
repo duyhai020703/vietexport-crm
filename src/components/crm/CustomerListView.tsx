@@ -1,22 +1,25 @@
 "use client";
 
 import React from "react";
-import { Edit2, Trash2 } from "lucide-react";
+import { Edit2, Trash2, AlertTriangle } from "lucide-react";
 import type { CustomerDTO } from "@/types/crm";
 import {
   getChannelLabel,
   getSourceLabel,
   getStageMeta,
+  isOverdueSevenDays,
 } from "@/lib/constants";
 
 interface CustomerListViewProps {
   customers: CustomerDTO[];
+  canDelete?: boolean;
   onEdit: (customer: CustomerDTO) => void;
   onDelete: (customer: CustomerDTO) => void;
 }
 
 export default function CustomerListView({
   customers,
+  canDelete = true,
   onEdit,
   onDelete,
 }: CustomerListViewProps) {
@@ -113,14 +116,16 @@ export default function CustomerListView({
                   >
                     <Edit2 className="w-4 h-4" />
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => onDelete(c)}
-                    className="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50"
-                    title="Xóa"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  {canDelete && (
+                    <button
+                      type="button"
+                      onClick={() => onDelete(c)}
+                      className="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50"
+                      title="Xóa"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -205,11 +210,22 @@ export default function CustomerListView({
                     )}
                   </td>
                   <td className="py-3 px-4 whitespace-nowrap">
-                    <span
-                      className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${stage.color}`}
-                    >
-                      {stage.label}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${stage.color}`}
+                      >
+                        {stage.label}
+                      </span>
+                      {isOverdueSevenDays(c.pipelineStage, c.lastActivityAt) && (
+                        <span
+                          title="Quá 7 ngày chưa cập nhật"
+                          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 text-[10px] font-bold"
+                        >
+                          <AlertTriangle className="w-3 h-3" />
+                          &gt;7d
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="py-3 px-4 whitespace-nowrap text-slate-700">
                     {c.salesRep.name}
@@ -224,14 +240,16 @@ export default function CustomerListView({
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => onDelete(c)}
-                        className="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors"
-                        title="Xóa"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      {canDelete && (
+                        <button
+                          type="button"
+                          onClick={() => onDelete(c)}
+                          className="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                          title="Xóa"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

@@ -10,6 +10,7 @@ datasource db {
 enum Role {
   ADMIN
   MANAGER
+  SALES_ADMIN
   SALE
 }
 
@@ -41,42 +42,83 @@ enum PipelineStage {
   LOST
 }
 
+enum OrderType {
+  STANDARD
+  OEM
+}
+
+enum Incoterm {
+  EXW
+  FOB
+  CFR
+  CIF
+}
+
+enum SpecsCheckStatus {
+  NOT_REQUIRED
+  PENDING
+  FEASIBLE
+  NOT_FEASIBLE
+}
+
+enum QuoteApprovalStatus {
+  AUTO_APPROVED
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+}
+
 enum OrderStatus {
   QUOTED
   CONFIRMED
+  IN_PRODUCTION
+  READY_TO_SHIP
   SHIPPED
   COMPLETED
 }
 
+enum PaymentType {
+  DEPOSIT
+  BALANCE
+  OTHER
+}
+
 model User {
-  id        String     @id @default(cuid())
-  name      String
-  email     String     @unique
-  role      Role       @default(SALE)
-  customers Customer[]
-  orders    Order[]
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  id                 String             @id @default(cuid())
+  name               String
+  email              String             @unique
+  role               Role               @default(SALE)
+  customers          Customer[]
+  activities         CustomerActivity[]
+  quotations         Quotation[]        @relation("QuoteSalesRep")
+  approvedQuotations Quotation[]        @relation("QuoteApprover")
+  orders             Order[]
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
 
   @@map("users")
 }
 
 model Customer {
-  id                String            @id @default(cuid())
-  customerCode      String            @unique
+  id                String             @id @default(cuid())
+  customerCode      String             @unique
   companyName       String
   countryRegion     String
   portOfDestination String?
   channel           CustomerChannel
   source            CustomerSource
   salesRepId        String
-  salesRep          User              @relation(fields: [salesRepId], references: [id])
-  pipelineStage     PipelineStage     @default(NEW_LEAD)
+  salesRep          User               @relation(fields: [salesRepId], references: [id])
+  pipelineStage     PipelineStage      @default(NEW_LEAD)
   lostReason        String?
+  lastActivityAt    DateTime           @default(now())
+  nextFollowUpDate  DateTime?
   contacts          CustomerContact[]
+  activities        CustomerActivity[]
+  quotations        Quotation[]
   orders            Order[]
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
 
   @@index([salesRepId])
   @@index([pipelineStage])
@@ -100,38 +142,130 @@ model CustomerContact {
   @@map("customer_contacts")
 }
 
+model CustomerActivity {
+  id               String    @id @default(cuid())
+  customerId       String
+  customer         Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  userId           String
+  user             User      @relation(fields: [userId], references: [id])
+  channel          String
+  summary          String
+  nextFollowUpDate DateTime?
+  createdAt        DateTime  @default(now())
+
+  @@index([customerId])
+  @@map("customer_activities")
+}
+
 model Product {
-  id            String      @id @default(cuid())
-  sku           String      @unique
-  name          String
-  specification String?
-  unit          String
-  basePrice     Float
-  orderItems    OrderItem[]
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  id               String          @id @default(cuid())
+  sku              String          @unique
+  name             String
+  specification    String?
+  unit             String
+  netWeightGrams   Float           @default(300)
+  packsPerCarton   Int             @default(40)
+  cartonDimensions String?
+  cbm              Float?
+  capacity20ft     Int?
+  capacity40hc     Int?
+  costPrice        Float           @default(0)
+  minMarginPercent Float           @default(15)
+  basePrice        Float
+  quotationItems   QuotationItem[]
+  orderItems       OrderItem[]
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
 
   @@map("products")
 }
 
+model Quotation {
+  id               String              @id @default(cuid())
+  quoteCode        String
+  version          Int                 @default(1)
+  customerId       String
+  customer         Customer            @relation(fields: [customerId], references: [id])
+  salesRepId       String
+  salesRep         User                @relation("QuoteSalesRep", fields: [salesRepId], references: [id])
+  quoteType        OrderType           @default(STANDARD)
+  incoterm         Incoterm            @default(FOB)
+  portName         String?
+  exchangeRate     Float               @default(25400)
+  targetPrice      Float?
+  packagingCost    Float               @default(0)
+  testingCost      Float               @default(0)
+  localCharges     Float               @default(0)
+  seaFreight       Float               @default(0)
+  marginPercent    Float               @default(18)
+  totalAmount      Float               @default(0)
+  specsNotes       String?
+  specsCheckStatus SpecsCheckStatus    @default(NOT_REQUIRED)
+  moq              String?
+  leadTimeDays     Int?
+  approvalStatus   QuoteApprovalStatus @default(AUTO_APPROVED)
+  approvedById     String?
+  approvedBy       User?               @relation("QuoteApprover", fields: [approvedById], references: [id])
+  convertedOrderId String?
+  items            QuotationItem[]
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+
+  @@unique([quoteCode, version])
+  @@index([customerId])
+  @@index([salesRepId])
+  @@map("quotations")
+}
+
+model QuotationItem {
+  id          String    @id @default(cuid())
+  quotationId String
+  quotation   Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product   @relation(fields: [productId], references: [id])
+  quantity    Float
+  unitPrice   Float
+  subtotal    Float
+
+  @@index([quotationId])
+  @@map("quotation_items")
+}
+
 model Order {
-  id          String      @id @default(cuid())
-  orderCode   String      @unique
-  customerId  String
-  customer    Customer    @relation(fields: [customerId], references: [id])
-  salesRepId  String
-  salesRep    User        @relation(fields: [salesRepId], references: [id])
-  orderDate   DateTime    @default(now())
-  status      OrderStatus @default(QUOTED)
-  totalAmount Float       @default(0)
-  notes       String?
-  items       OrderItem[]
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id                   String         @id @default(cuid())
+  orderCode            String         @unique
+  poNumber             String?
+  customerId           String
+  customer             Customer       @relation(fields: [customerId], references: [id])
+  salesRepId           String
+  salesRep             User           @relation(fields: [salesRepId], references: [id])
+  orderType            OrderType      @default(STANDARD)
+  incoterm             Incoterm       @default(FOB)
+  orderDate            DateTime       @default(now())
+  contractDate         DateTime?
+  estProductionDate    DateTime?
+  actualProductionDate DateTime?
+  packagingStatus      String?
+  qaQcStatus           String?
+  stuffingDate         DateTime?
+  etd                  DateTime?
+  eta                  DateTime?
+  docsStatus           String?
+  dhlTracking          String?
+  containerCount       Float          @default(1)
+  status               OrderStatus    @default(CONFIRMED)
+  totalAmount          Float          @default(0)
+  paidAmount           Float          @default(0)
+  notes                String?
+  items                OrderItem[]
+  payments             OrderPayment[]
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
 
   @@index([customerId])
   @@index([salesRepId])
   @@index([orderDate])
+  @@index([etd])
   @@map("orders")
 }
 
@@ -148,4 +282,20 @@ model OrderItem {
   @@index([orderId])
   @@index([productId])
   @@map("order_items")
+}
+
+model OrderPayment {
+  id          String      @id @default(cuid())
+  orderId     String
+  order       Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  paymentType PaymentType @default(DEPOSIT)
+  amount      Float
+  dueDate     DateTime?
+  paidDate    DateTime?
+  swiftRef    String?
+  notes       String?
+  createdAt   DateTime    @default(now())
+
+  @@index([orderId])
+  @@map("order_payments")
 }

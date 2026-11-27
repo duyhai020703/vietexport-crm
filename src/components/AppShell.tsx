@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutGrid,
+  ClipboardCheck,
   ShoppingCart,
   Package,
   BarChart3,
@@ -21,7 +22,8 @@ interface AppShellProps {
 
 const NAV_ITEMS = [
   { href: "/", label: "Khách hàng (CRM)", icon: LayoutGrid },
-  { href: "/orders", label: "Đơn hàng & Báo giá", icon: ShoppingCart },
+  { href: "/quotations", label: "Báo giá & Check Specs", icon: ClipboardCheck },
+  { href: "/orders", label: "Điều phối Đơn hàng", icon: ShoppingCart },
   { href: "/products", label: "Sản phẩm (SKU)", icon: Package },
   { href: "/dashboard", label: "Báo cáo Tháng", icon: BarChart3 },
 ];

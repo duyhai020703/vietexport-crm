@@ -23,6 +23,10 @@ export async function GET(
       include: {
         salesRep: { select: { id: true, name: true, email: true, role: true } },
         contacts: { orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }] },
+        activities: {
+          orderBy: { createdAt: "desc" },
+          include: { user: { select: { id: true, name: true } } },
+        },
         orders: {
           orderBy: { orderDate: "desc" },
           include: {
@@ -198,13 +202,19 @@ export async function PATCH(
             ? { salesRepId }
             : {}),
           ...(pipelineStage !== undefined ? { pipelineStage } : {}),
+          lastActivityAt: new Date(),
           lostReason:
             nextStage === "LOST" ? nextLostReason?.trim() || null : null,
         },
         include: {
           salesRep: { select: { id: true, name: true, email: true, role: true } },
           contacts: { orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }] },
-          _count: { select: { orders: true } },
+          activities: {
+            orderBy: { createdAt: "desc" },
+            take: 5,
+            include: { user: { select: { id: true, name: true } } },
+          },
+          _count: { select: { orders: true, quotations: true } },
         },
       });
     });
@@ -242,12 +252,10 @@ export async function DELETE(
       );
     }
 
-    if (
-      !isManagerOrAdmin(currentUser.role) &&
-      existing.salesRepId !== currentUser.id
-    ) {
+    // BRD: Sale Export không có quyền xóa dữ liệu khách hàng (chỉ Trưởng phòng/Admin)
+    if (!isManagerOrAdmin(currentUser.role)) {
       return NextResponse.json(
-        { error: "Bạn không có quyền xóa khách hàng này." },
+        { error: "Theo quy định BRD, Sale không có quyền xóa khách hàng. Chỉ Trưởng phòng/Admin mới được xóa." },
         { status: 403 }
       );
     }

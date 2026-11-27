@@ -96,7 +96,12 @@ export async function GET(req: NextRequest) {
       include: {
         salesRep: { select: { id: true, name: true, email: true, role: true } },
         contacts: { orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }] },
-        _count: { select: { orders: true } },
+        activities: {
+          orderBy: { createdAt: "desc" },
+          take: 5,
+          include: { user: { select: { id: true, name: true } } },
+        },
+        _count: { select: { orders: true, quotations: true } },
       },
       orderBy: { updatedAt: "desc" },
     });

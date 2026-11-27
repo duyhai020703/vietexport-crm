@@ -102,15 +102,43 @@ export const SOURCE_OPTIONS = [
 
 export const ORDER_STATUS_OPTIONS = [
   { value: "QUOTED", label: "Đã báo giá", color: "bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]" },
-  { value: "CONFIRMED", label: "Đã xác nhận", color: "bg-[#FFF7ED] text-[#D97706] border-[#FED7AA]" },
-  { value: "SHIPPED", label: "Đang giao hàng", color: "bg-[#F0F9FF] text-[#0284C7] border-[#BAE6FD]" },
+  { value: "CONFIRMED", label: "Đã xác nhận HĐ", color: "bg-[#FFF7ED] text-[#D97706] border-[#FED7AA]" },
+  { value: "IN_PRODUCTION", label: "Đang sản xuất", color: "bg-[#FEF3C7] text-[#B45309] border-[#FDE68A]" },
+  { value: "READY_TO_SHIP", label: "Chờ xuất / Đóng cont", color: "bg-[#E0F2FE] text-[#0369A1] border-[#BAE6FD]" },
+  { value: "SHIPPED", label: "Đang đi biển (On Board)", color: "bg-[#F0F9FF] text-[#0284C7] border-[#BAE6FD]" },
   { value: "COMPLETED", label: "Hoàn thành", color: "bg-[#ECFDF5] text-[#059669] border-[#A7F3D0]" },
 ] as const;
 
+export const INCOTERM_OPTIONS = ["EXW", "FOB", "CFR", "CIF"] as const;
+
+export const LOST_REASON_PRESETS = [
+  "Giá cao hơn đối thủ",
+  "MOQ quá cao",
+  "Thiếu chứng nhận (FDA/HACCP/Halal...)",
+  "Không đạt test mẫu",
+  "Cước tàu quá cao",
+  "Điều khoản thanh toán chưa phù hợp",
+] as const;
+
+export const QUOTE_APPROVAL_META: Record<string, { label: string; color: string }> = {
+  AUTO_APPROVED: { label: "Đã duyệt (Tự động)", color: "bg-[#ECFDF5] text-[#059669]" },
+  APPROVED: { label: "Đã duyệt (TP)", color: "bg-[#ECFDF5] text-[#059669]" },
+  PENDING_APPROVAL: { label: "Chờ TP duyệt", color: "bg-[#FFF7ED] text-[#D97706]" },
+  REJECTED: { label: "Từ chối duyệt", color: "bg-[#FEF2F2] text-[#DC2626]" },
+};
+
+export const SPECS_CHECK_META: Record<string, { label: string; color: string }> = {
+  NOT_REQUIRED: { label: "Không cần", color: "bg-slate-100 text-slate-600" },
+  PENDING: { label: "Đang check R&D/QA", color: "bg-[#FFF7ED] text-[#D97706]" },
+  FEASIBLE: { label: "Làm được", color: "bg-[#ECFDF5] text-[#059669]" },
+  NOT_FEASIBLE: { label: "Không đáp ứng", color: "bg-[#FEF2F2] text-[#DC2626]" },
+};
+
 export const ROLE_LABELS: Record<string, string> = {
-  ADMIN: "Quản trị viên (Admin)",
+  ADMIN: "Trưởng phòng (Admin)",
   MANAGER: "Quản lý (Manager)",
-  SALE: "Nhân viên Sale",
+  SALES_ADMIN: "Sales Admin (Điều phối)",
+  SALE: "Sale Export",
 };
 
 export function getStageMeta(stage: string) {
@@ -148,3 +176,24 @@ export function formatNumber(value: number) {
   }).format(value);
 }
 
+/**
+ * BRD Formula: Sản lượng (Tấn) = [Net Weight (g) × Số gói/thùng × Số thùng] / 1,000,000
+ */
+export function calculateTons(
+  netWeightGrams: number,
+  packsPerCarton: number,
+  quantityCartons: number
+): number {
+  return Number(
+    ((netWeightGrams * packsPerCarton * quantityCartons) / 1_000_000).toFixed(2)
+  );
+}
+
+export function isOverdueSevenDays(
+  stage: string,
+  lastActivityAt: string | Date
+): boolean {
+  if (stage !== "QUOTED" && stage !== "SAMPLE_SENT") return false;
+  const diffMs = Date.now() - new Date(lastActivityAt).getTime();
+  return diffMs > 7 * 24 * 60 * 60 * 1000;
+}

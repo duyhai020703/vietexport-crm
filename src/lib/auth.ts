@@ -3,11 +3,13 @@ import { prisma } from "@/lib/prisma";
 
 export const USER_COOKIE_NAME = "export_crm_user_id";
 
+export type UserRole = "ADMIN" | "MANAGER" | "SALES_ADMIN" | "SALE";
+
 export interface CurrentUser {
   id: string;
   name: string;
   email: string;
-  role: "ADMIN" | "MANAGER" | "SALE";
+  role: UserRole;
 }
 
 /**
@@ -42,3 +44,6 @@ export function isManagerOrAdmin(role: string) {
   return role === "ADMIN" || role === "MANAGER";
 }
 
+export function isSalesAdminOrAbove(role: string) {
+  return role === "ADMIN" || role === "MANAGER" || role === "SALES_ADMIN";
+}

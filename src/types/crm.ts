@@ -1,4 +1,4 @@
-export type Role = "ADMIN" | "MANAGER" | "SALE";
+export type Role = "ADMIN" | "MANAGER" | "SALES_ADMIN" | "SALE";
 
 export interface UserDTO {
   id: string;
@@ -14,6 +14,17 @@ export interface CustomerContactDTO {
   email: string;
   phoneWhatsAppWeChat: string;
   isPrimary: boolean;
+}
+
+export interface CustomerActivityDTO {
+  id: string;
+  customerId: string;
+  userId: string;
+  user?: { id: string; name: string };
+  channel: string;
+  summary: string;
+  nextFollowUpDate: string | null;
+  createdAt: string;
 }
 
 export interface CustomerDTO {
@@ -37,8 +48,11 @@ export interface CustomerDTO {
     | "DORMANT"
     | "LOST";
   lostReason: string | null;
+  lastActivityAt: string;
+  nextFollowUpDate: string | null;
   contacts: CustomerContactDTO[];
-  _count?: { orders: number };
+  activities?: CustomerActivityDTO[];
+  _count?: { orders: number; quotations?: number };
   createdAt: string;
   updatedAt: string;
 }
@@ -49,7 +63,71 @@ export interface ProductDTO {
   name: string;
   specification: string | null;
   unit: string;
+  netWeightGrams: number;
+  packsPerCarton: number;
+  cartonDimensions: string | null;
+  cbm: number | null;
+  capacity20ft: number | null;
+  capacity40hc: number | null;
+  costPrice?: number;
+  minMarginPercent: number;
   basePrice: number;
+}
+
+export interface QuotationItemDTO {
+  id?: string;
+  productId: string;
+  product?: ProductDTO;
+  quantity: number;
+  unitPrice: number;
+  subtotal: number;
+}
+
+export interface QuotationDTO {
+  id: string;
+  quoteCode: string;
+  version: number;
+  customerId: string;
+  customer: {
+    id: string;
+    customerCode: string;
+    companyName: string;
+    countryRegion: string;
+  };
+  salesRepId: string;
+  salesRep: { id: string; name: string; role: Role };
+  quoteType: "STANDARD" | "OEM";
+  incoterm: "EXW" | "FOB" | "CFR" | "CIF";
+  portName: string | null;
+  exchangeRate: number;
+  targetPrice: number | null;
+  packagingCost: number;
+  testingCost: number;
+  localCharges: number;
+  seaFreight: number;
+  marginPercent: number;
+  totalAmount: number;
+  specsNotes: string | null;
+  specsCheckStatus: "NOT_REQUIRED" | "PENDING" | "FEASIBLE" | "NOT_FEASIBLE";
+  moq: string | null;
+  leadTimeDays: number | null;
+  approvalStatus: "AUTO_APPROVED" | "PENDING_APPROVAL" | "APPROVED" | "REJECTED";
+  approvedBy?: { id: string; name: string } | null;
+  convertedOrderId: string | null;
+  items: QuotationItemDTO[];
+  createdAt: string;
+}
+
+export interface OrderPaymentDTO {
+  id: string;
+  orderId: string;
+  paymentType: "DEPOSIT" | "BALANCE" | "OTHER";
+  amount: number;
+  dueDate: string | null;
+  paidDate: string | null;
+  swiftRef: string | null;
+  notes: string | null;
+  createdAt: string;
 }
 
 export interface OrderItemDTO {
@@ -60,6 +138,8 @@ export interface OrderItemDTO {
     sku: string;
     name: string;
     unit: string;
+    netWeightGrams: number;
+    packsPerCarton: number;
   };
   quantity: number;
   unitPrice: number;
@@ -69,6 +149,7 @@ export interface OrderItemDTO {
 export interface OrderDTO {
   id: string;
   orderCode: string;
+  poNumber: string | null;
   customerId: string;
   customer: {
     id: string;
@@ -83,10 +164,30 @@ export interface OrderDTO {
     name: string;
     role: Role;
   };
+  orderType: "STANDARD" | "OEM";
+  incoterm: "EXW" | "FOB" | "CFR" | "CIF";
   orderDate: string;
-  status: "QUOTED" | "CONFIRMED" | "SHIPPED" | "COMPLETED";
+  contractDate: string | null;
+  estProductionDate: string | null;
+  actualProductionDate: string | null;
+  packagingStatus: string | null;
+  qaQcStatus: string | null;
+  stuffingDate: string | null;
+  etd: string | null;
+  eta: string | null;
+  docsStatus: string | null;
+  dhlTracking: string | null;
+  containerCount: number;
+  status:
+    | "QUOTED"
+    | "CONFIRMED"
+    | "IN_PRODUCTION"
+    | "READY_TO_SHIP"
+    | "SHIPPED"
+    | "COMPLETED";
   totalAmount: number;
+  paidAmount: number;
   notes: string | null;
   items: OrderItemDTO[];
+  payments?: OrderPaymentDTO[];
 }
-

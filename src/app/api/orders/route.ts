@@ -1,12 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser, isManagerOrAdmin } from "@/lib/auth";
-import type { OrderStatus, Prisma } from "@/generated/prisma/client";
+import {
+  getCurrentUser,
+  isManagerOrAdmin,
+  isSalesAdminOrAbove,
+} from "@/lib/auth";
+import type {
+  Incoterm,
+  OrderStatus,
+  OrderType,
+  Prisma,
+} from "@/generated/prisma/client";
 
 async function generateNextOrderCode(orderDate: Date): Promise<string> {
-  const year = orderDate.getFullYear();
-  const month = String(orderDate.getMonth() + 1).padStart(2, "0");
-  const prefix = `ORD-${year}${month}-`;
+  const year2 = String(orderDate.getFullYear()).slice(-2);
+  const prefix = `ORD-${year2}-`;
 
   const existing = await prisma.order.findMany({
     where: { orderCode: { startsWith: prefix } },
@@ -37,7 +45,8 @@ export async function GET(req: NextRequest) {
 
     const where: Prisma.OrderWhereInput = {};
 
-    if (!isManagerOrAdmin(currentUser.role)) {
+    // BRD: Sales Admin, Manager, Admin xem toàn bộ đơn hàng; Sale xem đơn của mình
+    if (!isSalesAdminOrAbove(currentUser.role)) {
       where.salesRepId = currentUser.id;
     } else if (salesRepIdParam && salesRepIdParam !== "ALL") {
       where.salesRepId = salesRepIdParam;
@@ -50,6 +59,7 @@ export async function GET(req: NextRequest) {
     if (search) {
       where.OR = [
         { orderCode: { contains: search, mode: "insensitive" } },
+        { poNumber: { contains: search, mode: "insensitive" } },
         { customer: { companyName: { contains: search, mode: "insensitive" } } },
         { customer: { customerCode: { contains: search, mode: "insensitive" } } },
       ];
@@ -71,9 +81,19 @@ export async function GET(req: NextRequest) {
         items: {
           include: {
             product: {
-              select: { id: true, sku: true, name: true, unit: true },
+              select: {
+                id: true,
+                sku: true,
+                name: true,
+                unit: true,
+                netWeightGrams: true,
+                packsPerCarton: true,
+              },
             },
           },
+        },
+        payments: {
+          orderBy: { createdAt: "asc" },
         },
       },
       orderBy: { orderDate: "desc" },
@@ -105,13 +125,29 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const {
       customerId,
+      poNumber,
+      orderType = "STANDARD",
+      incoterm = "FOB",
       orderDate,
-      status = "QUOTED",
+      contractDate,
+      estProductionDate,
+      etd,
+      eta,
+      containerCount = 1,
+      status = "CONFIRMED",
       notes,
       items = [],
     } = body as {
       customerId?: string;
+      poNumber?: string;
+      orderType?: OrderType;
+      incoterm?: Incoterm;
       orderDate?: string;
+      contractDate?: string;
+      estProductionDate?: string;
+      etd?: string;
+      eta?: string;
+      containerCount?: number;
       status?: OrderStatus;
       notes?: string;
       items?: OrderItemInput[];
@@ -144,6 +180,7 @@ export async function POST(req: NextRequest) {
 
     if (
       !isManagerOrAdmin(currentUser.role) &&
+      !isSalesAdminOrAbove(currentUser.role) &&
       customer.salesRepId !== currentUser.id
     ) {
       return NextResponse.json(
@@ -176,15 +213,21 @@ export async function POST(req: NextRequest) {
     const order = await prisma.order.create({
       data: {
         orderCode,
+        poNumber: poNumber?.trim() || null,
         customerId,
         salesRepId: customer.salesRepId,
+        orderType,
+        incoterm,
         orderDate: parsedDate,
+        contractDate: contractDate ? new Date(contractDate) : parsedDate,
+        estProductionDate: estProductionDate ? new Date(estProductionDate) : null,
+        etd: etd ? new Date(etd) : null,
+        eta: eta ? new Date(eta) : null,
+        containerCount: Number(containerCount) || 1,
         status,
         totalAmount,
         notes: notes?.trim() || null,
-        items: {
-          create: preparedItems,
-        },
+        items: { create: preparedItems },
       },
       include: {
         customer: {
@@ -200,10 +243,18 @@ export async function POST(req: NextRequest) {
         items: {
           include: {
             product: {
-              select: { id: true, sku: true, name: true, unit: true },
+              select: {
+                id: true,
+                sku: true,
+                name: true,
+                unit: true,
+                netWeightGrams: true,
+                packsPerCarton: true,
+              },
             },
           },
         },
+        payments: true,
       },
     });
 
@@ -222,4 +273,3 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-

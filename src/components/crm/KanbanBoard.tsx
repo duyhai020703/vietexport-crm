@@ -8,15 +8,21 @@ import {
   type DropResult,
 } from "@hello-pangea/dnd";
 import {
+  AlertTriangle,
   Anchor,
   Building2,
+  CalendarClock,
   Globe,
   Phone,
   ShoppingBag,
   User,
 } from "lucide-react";
 import type { CustomerDTO } from "@/types/crm";
-import { getChannelLabel, PIPELINE_STAGES } from "@/lib/constants";
+import {
+  getChannelLabel,
+  isOverdueSevenDays,
+  PIPELINE_STAGES,
+} from "@/lib/constants";
 
 interface KanbanBoardProps {
   customers: CustomerDTO[];
@@ -100,6 +106,10 @@ export default function KanbanBoard({
                       const primaryPic =
                         customer.contacts.find((c) => c.isPrimary) ??
                         customer.contacts[0];
+                      const overdue = isOverdueSevenDays(
+                        customer.pipelineStage,
+                        customer.lastActivityAt
+                      );
 
                       return (
                         <Draggable
@@ -116,6 +126,8 @@ export default function KanbanBoard({
                               className={`bg-white rounded-lg border p-3 shadow-[0_1px_2px_rgba(15,23,42,0.03)] hover:border-[#1677FF]/50 hover:shadow-sm transition-all cursor-pointer ${
                                 dragSnapshot.isDragging
                                   ? "border-[#1677FF] shadow-lg rotate-1"
+                                  : overdue
+                                  ? "border-rose-400 bg-rose-50/30"
                                   : "border-[#E5EAF2]"
                               }`}
                             >
@@ -123,9 +135,16 @@ export default function KanbanBoard({
                                 <span className="text-[11px] font-mono font-semibold text-[#1677FF] bg-[#EBF4FF] border border-[#BFDBFE]/60 px-1.5 py-0.5 rounded">
                                   {customer.customerCode}
                                 </span>
-                                <span className="text-[11px] font-medium text-slate-500 truncate">
-                                  {getChannelLabel(customer.channel).split(" ")[0]}
-                                </span>
+                                {overdue ? (
+                                  <span className="inline-flex items-center gap-1 text-[10px] font-bold text-rose-700 bg-rose-100 px-1.5 py-0.5 rounded">
+                                    <AlertTriangle className="w-3 h-3" />
+                                    &gt;7 ngày
+                                  </span>
+                                ) : (
+                                  <span className="text-[11px] font-medium text-slate-500 truncate">
+                                    {getChannelLabel(customer.channel).split(" ")[0]}
+                                  </span>
+                                )}
                               </div>
 
                               <h4 className="font-semibold text-sm text-slate-900 leading-snug mb-2 flex items-start gap-1.5">
@@ -155,6 +174,17 @@ export default function KanbanBoard({
                                     <Phone className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                                     <span className="truncate font-medium">
                                       {primaryPic.name}
+                                    </span>
+                                  </div>
+                                )}
+                                {customer.nextFollowUpDate && (
+                                  <div className="flex items-center gap-1.5 text-[11px] text-amber-700 pt-0.5">
+                                    <CalendarClock className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                                    <span>
+                                      Hẹn:{" "}
+                                      {new Date(
+                                        customer.nextFollowUpDate
+                                      ).toLocaleDateString("vi-VN")}
                                     </span>
                                   </div>
                                 )}

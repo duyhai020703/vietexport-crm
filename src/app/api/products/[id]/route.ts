@@ -8,11 +8,33 @@ export async function PATCH(
   try {
     const { id } = await context.params;
     const body = await req.json();
-    const { sku, name, specification, unit, basePrice } = body as {
+    const {
+      sku,
+      name,
+      specification,
+      unit,
+      netWeightGrams,
+      packsPerCarton,
+      cartonDimensions,
+      cbm,
+      capacity20ft,
+      capacity40hc,
+      costPrice,
+      minMarginPercent,
+      basePrice,
+    } = body as {
       sku?: string;
       name?: string;
-      specification?: string;
+      specification?: string | null;
       unit?: string;
+      netWeightGrams?: number;
+      packsPerCarton?: number;
+      cartonDimensions?: string | null;
+      cbm?: number | null;
+      capacity20ft?: number | null;
+      capacity40hc?: number | null;
+      costPrice?: number;
+      minMarginPercent?: number;
       basePrice?: number;
     };
 
@@ -45,6 +67,28 @@ export async function PATCH(
           ? { specification: specification?.trim() || null }
           : {}),
         ...(unit !== undefined ? { unit: unit.trim() } : {}),
+        ...(netWeightGrams !== undefined
+          ? { netWeightGrams: Number(netWeightGrams) }
+          : {}),
+        ...(packsPerCarton !== undefined
+          ? { packsPerCarton: Number(packsPerCarton) }
+          : {}),
+        ...(cartonDimensions !== undefined
+          ? { cartonDimensions: cartonDimensions?.trim() || null }
+          : {}),
+        ...(cbm !== undefined
+          ? { cbm: cbm !== null ? Number(cbm) : null }
+          : {}),
+        ...(capacity20ft !== undefined
+          ? { capacity20ft: capacity20ft !== null ? Number(capacity20ft) : null }
+          : {}),
+        ...(capacity40hc !== undefined
+          ? { capacity40hc: capacity40hc !== null ? Number(capacity40hc) : null }
+          : {}),
+        ...(costPrice !== undefined ? { costPrice: Number(costPrice) } : {}),
+        ...(minMarginPercent !== undefined
+          ? { minMarginPercent: Number(minMarginPercent) }
+          : {}),
         ...(basePrice !== undefined ? { basePrice: Number(basePrice) } : {}),
       },
     });
@@ -86,4 +130,3 @@ export async function DELETE(
     );
   }
 }
-

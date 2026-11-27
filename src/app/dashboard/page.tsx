@@ -245,7 +245,7 @@ export default function DashboardPage() {
             <div className="overflow-x-auto flex-1">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-[#F8FAFC] border-b border-[#E5EAF2] text-xs font-semibold text-slate-500 uppercase">
+                  <tr className="bg-[#1E293B] text-white text-xs font-semibold tracking-wide divide-x divide-[#334155]">
                     <th className="py-2.5 px-4">SKU</th>
                     <th className="py-2.5 px-4">Tên sản phẩm</th>
                     <th className="py-2.5 px-4 text-right">Tổng sản lượng</th>

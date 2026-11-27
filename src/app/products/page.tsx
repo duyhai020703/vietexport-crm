@@ -207,7 +207,7 @@ export default function ProductsPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-[#F8FAFC] border-b border-[#E5EAF2] text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                <tr className="bg-[#1E293B] text-white text-xs font-semibold tracking-wide divide-x divide-[#334155]">
                   <th className="py-3 px-4">Mã SKU</th>
                   <th className="py-3 px-4">Tên sản phẩm</th>
                   <th className="py-3 px-4">Quy cách đóng gói</th>

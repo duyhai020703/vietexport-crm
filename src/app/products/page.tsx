@@ -142,7 +142,68 @@ export default function ProductsPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-[#E5EAF2] shadow-[0_1px_3px_rgba(15,23,42,0.03)] overflow-hidden">
+        {/* Mobile Cards */}
+        <div className="md:hidden space-y-3">
+          {loading && products.length === 0 ? (
+            <div className="bg-white rounded-xl border border-[#E5EAF2] p-8 text-center text-slate-500 text-sm">
+              Đang tải danh mục sản phẩm...
+            </div>
+          ) : products.length === 0 ? (
+            <div className="bg-white rounded-xl border border-[#E5EAF2] p-8 text-center text-slate-500 text-sm">
+              Chưa có mã hàng nào.
+            </div>
+          ) : (
+            products.map((p) => (
+              <div
+                key={p.id}
+                className="bg-white rounded-xl border border-[#E5EAF2] p-3.5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] space-y-2"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <span className="inline-block px-2 py-0.5 rounded bg-[#EBF4FF] text-[#1677FF] border border-[#BFDBFE]/60 font-mono text-[11px] font-semibold">
+                      {p.sku}
+                    </span>
+                    <div className="font-bold text-slate-900 text-sm mt-1">
+                      {p.name}
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <div className="font-bold text-slate-900 text-sm tabular-nums">
+                      {formatUSD(p.basePrice)}
+                    </div>
+                    <span className="text-[11px] text-slate-500">
+                      / {p.unit}
+                    </span>
+                  </div>
+                </div>
+                {p.specification && (
+                  <p className="text-xs text-slate-600">{p.specification}</p>
+                )}
+                <div className="flex items-center justify-end gap-1 pt-2 border-t border-[#EEF2F7]">
+                  <button
+                    type="button"
+                    onClick={() => openEdit(p)}
+                    className="p-1.5 rounded-lg text-slate-500 hover:text-[#1677FF] hover:bg-[#EBF4FF]"
+                    title="Chỉnh sửa"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(p)}
+                    className="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50"
+                    title="Xóa"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Desktop & Tablet Table */}
+        <div className="hidden md:block bg-white rounded-xl border border-[#E5EAF2] shadow-[0_1px_3px_rgba(15,23,42,0.03)] overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>

@@ -267,8 +267,94 @@ export default function OrdersPage() {
           </select>
         </div>
 
-        {/* Orders Table */}
-        <div className="bg-white rounded-xl border border-[#E5EAF2] shadow-[0_1px_3px_rgba(15,23,42,0.03)] overflow-hidden">
+        {/* Orders Mobile Cards */}
+        <div className="md:hidden space-y-3">
+          {loading && orders.length === 0 ? (
+            <div className="bg-white rounded-xl border border-[#E5EAF2] p-8 text-center text-slate-500 text-sm">
+              Đang tải đơn hàng...
+            </div>
+          ) : orders.length === 0 ? (
+            <div className="bg-white rounded-xl border border-[#E5EAF2] p-8 text-center text-slate-500 text-sm">
+              Chưa có đơn hàng nào.
+            </div>
+          ) : (
+            orders.map((order) => {
+              const statusMeta = getOrderStatusMeta(order.status);
+              return (
+                <div
+                  key={order.id}
+                  className="bg-white rounded-xl border border-[#E5EAF2] p-3.5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] space-y-2.5"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#EBF4FF] text-[#1677FF] border border-[#BFDBFE]/60 font-mono text-[11px] font-semibold">
+                        <FileText className="w-3 h-3" />
+                        {order.orderCode}
+                      </span>
+                      <div className="font-bold text-slate-900 text-sm mt-1">
+                        {order.customer.companyName}
+                      </div>
+                      <div className="text-[11px] text-slate-500">
+                        {order.customer.countryRegion} •{" "}
+                        {new Date(order.orderDate).toLocaleDateString("vi-VN")}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-bold text-slate-900 text-sm tabular-nums">
+                        {formatUSD(order.totalAmount)}
+                      </div>
+                      <div className="text-[11px] text-slate-500">
+                        {order.salesRep.name}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-[#F8FAFC] rounded-lg px-2.5 py-2 border border-[#EEF2F7] space-y-1">
+                    {order.items.map((item, i) => (
+                      <div key={item.id ?? i} className="text-xs text-slate-700">
+                        <span className="font-mono font-semibold text-slate-800">
+                          {item.product?.sku}
+                        </span>{" "}
+                        — {formatNumber(item.quantity)} {item.product?.unit} ×{" "}
+                        {formatUSD(item.unitPrice)}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1.5 border-t border-[#EEF2F7]">
+                    <select
+                      value={order.status}
+                      onChange={(e) =>
+                        handleStatusChange(
+                          order.id,
+                          e.target.value as OrderDTO["status"]
+                        )
+                      }
+                      className={`rounded-full px-2.5 py-1 text-xs font-semibold border cursor-pointer focus:outline-none ${statusMeta.color}`}
+                    >
+                      {ORDER_STATUS_OPTIONS.map((st) => (
+                        <option key={st.value} value={st.value}>
+                          {st.label}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteOrder(order)}
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50"
+                      title="Xóa đơn hàng"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Orders Table (Tablet & Desktop) */}
+        <div className="hidden md:block bg-white rounded-xl border border-[#E5EAF2] shadow-[0_1px_3px_rgba(15,23,42,0.03)] overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>

@@ -134,11 +134,11 @@ export default function DashboardPage() {
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5">
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
             <select
               value={month}
               onChange={(e) => setMonth(Number(e.target.value))}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium focus:border-blue-500 focus:outline-none"
+              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium focus:border-[#1677FF] focus:outline-none w-full sm:w-auto"
             >
               {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
                 <option key={m} value={m}>
@@ -150,7 +150,7 @@ export default function DashboardPage() {
             <select
               value={year}
               onChange={(e) => setYear(Number(e.target.value))}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium focus:border-blue-500 focus:outline-none"
+              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium focus:border-[#1677FF] focus:outline-none w-full sm:w-auto"
             >
               {[year - 1, year, year + 1].map((y) => (
                 <option key={y} value={y}>
@@ -163,7 +163,7 @@ export default function DashboardPage() {
               <select
                 value={salesRepId}
                 onChange={(e) => setSalesRepId(e.target.value)}
-                className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium focus:border-blue-500 focus:outline-none"
+                className="col-span-2 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium focus:border-[#1677FF] focus:outline-none w-full sm:w-auto"
               >
                 <option value="ALL">Tất cả Sale</option>
                 {users.map((u) => (

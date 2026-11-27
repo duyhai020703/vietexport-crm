@@ -29,7 +29,107 @@ export default function CustomerListView({
   }
 
   return (
-    <div className="bg-white rounded-xl border border-[#E5EAF2] shadow-[0_1px_3px_rgba(15,23,42,0.03)] overflow-hidden">
+    <>
+      {/* Mobile Card View */}
+      <div className="md:hidden space-y-3">
+        {customers.map((c) => {
+          const stage = getStageMeta(c.pipelineStage);
+          const primaryPic =
+            c.contacts.find((ct) => ct.isPrimary) ?? c.contacts[0];
+
+          return (
+            <div
+              key={c.id}
+              className="bg-white rounded-xl border border-[#E5EAF2] p-3.5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] space-y-2.5"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <span className="inline-block px-2 py-0.5 rounded bg-[#EBF4FF] text-[#1677FF] border border-[#BFDBFE]/60 font-mono text-[11px] font-semibold mb-1">
+                    {c.customerCode}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => onEdit(c)}
+                    className="block font-bold text-slate-900 text-sm text-left hover:text-[#1677FF]"
+                  >
+                    {c.companyName}
+                  </button>
+                </div>
+                <span
+                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold border shrink-0 ${stage.color}`}
+                >
+                  {stage.label}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 text-xs text-slate-600">
+                <div>
+                  <span className="text-slate-400 block text-[11px]">Thị trường</span>
+                  <span className="font-medium text-slate-800">{c.countryRegion}</span>
+                  {c.portOfDestination && (
+                    <span className="block text-[11px] text-slate-500">
+                      Cảng: {c.portOfDestination}
+                    </span>
+                  )}
+                </div>
+                <div>
+                  <span className="text-slate-400 block text-[11px]">Phân loại / Nguồn</span>
+                  <span className="font-medium text-slate-800">
+                    {getChannelLabel(c.channel).split(" ")[0]}
+                  </span>
+                  <span className="block text-[11px] text-slate-500">
+                    {getSourceLabel(c.source)}
+                  </span>
+                </div>
+              </div>
+
+              {primaryPic && (
+                <div className="text-xs text-slate-700 bg-[#F8FAFC] rounded-lg px-2.5 py-1.5 border border-[#EEF2F7]">
+                  <span className="font-semibold">{primaryPic.name}</span>
+                  {(primaryPic.email || primaryPic.phoneWhatsAppWeChat) && (
+                    <span className="text-slate-500 block truncate">
+                      {primaryPic.email || primaryPic.phoneWhatsAppWeChat}
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {c.pipelineStage === "LOST" && c.lostReason && (
+                <p className="text-xs text-rose-600 bg-rose-50 rounded-md px-2.5 py-1.5">
+                  Lý do trượt: {c.lostReason}
+                </p>
+              )}
+
+              <div className="flex items-center justify-between pt-2 border-t border-[#EEF2F7]">
+                <span className="text-xs text-slate-500">
+                  Sale: <strong className="text-slate-700">{c.salesRep.name}</strong>
+                </span>
+                <div className="inline-flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => onEdit(c)}
+                    className="p-1.5 rounded-lg text-slate-500 hover:text-[#1677FF] hover:bg-[#EBF4FF]"
+                    title="Chỉnh sửa"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onDelete(c)}
+                    className="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50"
+                    title="Xóa"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Desktop & Tablet Table View */}
+      <div className="hidden md:block bg-white rounded-xl border border-[#E5EAF2] shadow-[0_1px_3px_rgba(15,23,42,0.03)] overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
@@ -141,6 +241,7 @@ export default function CustomerListView({
         </table>
       </div>
     </div>
+    </>
   );
 }
 

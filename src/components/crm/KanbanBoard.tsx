@@ -54,7 +54,7 @@ export default function KanbanBoard({
 
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
-      <div className="flex gap-3.5 overflow-x-auto pb-4 kanban-scroll min-h-[calc(100vh-260px)]">
+      <div className="flex gap-3 sm:gap-3.5 overflow-x-auto pb-4 kanban-scroll snap-x sm:snap-none snap-mandatory min-h-[calc(100vh-290px)] sm:min-h-[calc(100vh-260px)]">
         {PIPELINE_STAGES.map((stage) => {
           const columnCustomers = customers.filter(
             (c) => c.pipelineStage === stage.key
@@ -63,7 +63,7 @@ export default function KanbanBoard({
           return (
             <div
               key={stage.key}
-              className="w-[295px] shrink-0 flex flex-col rounded-xl bg-[#EEF2F7]/75 border border-[#E5EAF2]"
+              className="w-[272px] sm:w-[295px] shrink-0 snap-start flex flex-col rounded-xl bg-[#EEF2F7]/75 border border-[#E5EAF2]"
             >
               {/* Column Header */}
               <div

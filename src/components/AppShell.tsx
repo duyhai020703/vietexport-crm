@@ -73,25 +73,25 @@ export default function AppShell({ children, onUserChanged }: AppShellProps) {
     <div className="min-h-screen w-full flex flex-col bg-[#F3F6FA]">
       {/* Top Navbar */}
       <header className="sticky top-0 z-30 w-full bg-white border-b border-[#E5EAF2] shadow-[0_1px_2px_rgba(22,119,255,0.03)]">
-        <div className="w-full px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-6">
-            <Link href="/" className="flex items-center gap-2.5 shrink-0">
+        <div className="w-full px-3 sm:px-6 h-14 flex items-center justify-between gap-2 sm:gap-4">
+          <div className="flex items-center gap-4 lg:gap-6 min-w-0">
+            <Link href="/" className="flex items-center gap-2 sm:gap-2.5 shrink-0">
               <img
                 src="/logo.png"
                 alt="TanNhienExport-CRM"
                 className="w-8 h-8 rounded-lg object-contain bg-white border border-[#E5EAF2] p-0.5 shrink-0"
               />
               <div className="leading-tight">
-                <span className="font-bold text-slate-800 text-sm tracking-tight block">
+                <span className="font-bold text-slate-800 text-xs sm:text-sm tracking-tight block truncate max-w-[140px] sm:max-w-none">
                   TanNhienExport-CRM
                 </span>
-                <span className="text-[11px] text-slate-500 font-medium block">
+                <span className="text-[10px] sm:text-[11px] text-slate-500 font-medium hidden sm:block">
                   Quản lý Xuất khẩu B2B
                 </span>
               </div>
             </Link>
 
-            <nav className="hidden md:flex items-center gap-1">
+            <nav className="hidden lg:flex items-center gap-1">
               {NAV_ITEMS.map((item) => {
                 const isActive =
                   item.href === "/"
@@ -117,15 +117,15 @@ export default function AppShell({ children, onUserChanged }: AppShellProps) {
           </div>
 
           {/* Role / User Switcher */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 shrink-0">
             {currentUser && (
-              <div className="flex items-center gap-2 bg-[#F8FAFC] border border-[#E5EAF2] rounded-lg px-2.5 py-1.5">
+              <div className="flex items-center gap-1.5 sm:gap-2 bg-[#F8FAFC] border border-[#E5EAF2] rounded-lg px-2 sm:px-2.5 py-1.5">
                 {currentUser.role === "SALE" ? (
                   <UserCheck className="w-4 h-4 text-[#1677FF] shrink-0" />
                 ) : (
                   <Shield className="w-4 h-4 text-[#059669] shrink-0" />
                 )}
-                <span className="text-xs text-slate-500 hidden sm:inline">
+                <span className="text-xs text-slate-500 hidden xl:inline">
                   Tài khoản:
                 </span>
                 <select
@@ -133,7 +133,7 @@ export default function AppShell({ children, onUserChanged }: AppShellProps) {
                   disabled={switching}
                   value={currentUser.id}
                   onChange={(e) => handleSwitchUser(e.target.value)}
-                  className="text-xs font-semibold text-slate-800 bg-transparent focus:outline-none cursor-pointer pr-1"
+                  className="text-xs font-semibold text-slate-800 bg-transparent focus:outline-none cursor-pointer pr-1 max-w-[125px] sm:max-w-[210px] lg:max-w-none truncate"
                 >
                   {users.map((u) => (
                     <option key={u.id} value={u.id}>
@@ -146,8 +146,8 @@ export default function AppShell({ children, onUserChanged }: AppShellProps) {
           </div>
         </div>
 
-        {/* Mobile Nav */}
-        <div className="md:hidden border-t border-[#E5EAF2] px-3 py-1.5 flex items-center gap-1 overflow-x-auto">
+        {/* Mobile & Tablet Nav */}
+        <div className="lg:hidden border-t border-[#E5EAF2] px-3 py-1.5 flex items-center gap-1.5 overflow-x-auto">
           {NAV_ITEMS.map((item) => {
             const isActive =
               item.href === "/"

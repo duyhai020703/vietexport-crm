@@ -232,9 +232,9 @@ export default function CustomerFormModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
-      <div className="bg-white rounded-xl shadow-xl border border-slate-200 w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50/70">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-2 sm:p-4">
+      <div className="bg-white rounded-xl shadow-xl border border-[#E5EAF2] w-full max-w-3xl max-h-[95vh] sm:max-h-[92vh] flex flex-col overflow-hidden">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b border-[#E5EAF2] bg-[#F8FAFC]">
           <div>
             <h2 className="text-lg font-bold text-slate-900">
               {isEdit

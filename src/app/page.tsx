@@ -241,8 +241,8 @@ export default function CrmHomePage() {
         </div>
 
         {/* Search & Filter Bar */}
-        <div className="bg-white rounded-xl border border-[#E5EAF2] p-3 shadow-[0_1px_2px_rgba(15,23,42,0.03)] flex flex-wrap items-center gap-2.5">
-          <div className="relative flex-1 min-w-[220px]">
+        <div className="bg-white rounded-xl border border-[#E5EAF2] p-3 shadow-[0_1px_2px_rgba(15,23,42,0.03)] grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 sm:gap-2.5">
+          <div className="relative col-span-2 sm:flex-1 sm:min-w-[220px]">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"

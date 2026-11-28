@@ -8,16 +8,12 @@ import {
   getSourceLabel,
   getStageMeta,
   isOverdueSevenDays,
-  PIPELINE_STAGES,
 } from "@/lib/constants";
 
 interface CustomerListViewProps {
   customers: CustomerDTO[];
   canDelete?: boolean;
-  onStageChange: (
-    customer: CustomerDTO,
-    targetStage: CustomerDTO["pipelineStage"]
-  ) => void;
+  onViewStageHistory: (customer: CustomerDTO) => void;
   onEdit: (customer: CustomerDTO) => void;
   onDelete: (customer: CustomerDTO) => void;
 }
@@ -25,7 +21,7 @@ interface CustomerListViewProps {
 export default function CustomerListView({
   customers,
   canDelete = true,
-  onStageChange,
+  onViewStageHistory,
   onEdit,
   onDelete,
 }: CustomerListViewProps) {
@@ -64,22 +60,14 @@ export default function CustomerListView({
                     {c.companyName}
                   </button>
                 </div>
-                <select
-                  value={c.pipelineStage}
-                  onChange={(e) =>
-                    onStageChange(
-                      c,
-                      e.target.value as CustomerDTO["pipelineStage"]
-                    )
-                  }
-                  className={`inline-flex items-center px-2 py-1 rounded-full text-[11px] font-semibold border shrink-0 cursor-pointer focus:outline-none ${stage.color}`}
+                <button
+                  type="button"
+                  onClick={() => onViewStageHistory(c)}
+                  title="Xem lịch sử chuyển trạng thái"
+                  className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold border shrink-0 cursor-pointer hover:opacity-85 ${stage.color}`}
                 >
-                  {PIPELINE_STAGES.map((st) => (
-                    <option key={st.key} value={st.key}>
-                      {st.label}
-                    </option>
-                  ))}
-                </select>
+                  {stage.label}
+                </button>
               </div>
               <div className="flex items-center gap-1 text-[11px] text-slate-500">
                 <Clock className="w-3 h-3" />
@@ -244,22 +232,14 @@ export default function CustomerListView({
                   </td>
                   <td className="py-3 px-4 whitespace-nowrap">
                     <div className="flex items-center gap-1.5">
-                      <select
-                        value={c.pipelineStage}
-                        onChange={(e) =>
-                          onStageChange(
-                            c,
-                            e.target.value as CustomerDTO["pipelineStage"]
-                          )
-                        }
-                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border cursor-pointer focus:outline-none ${stage.color}`}
+                      <button
+                        type="button"
+                        onClick={() => onViewStageHistory(c)}
+                        title="Bấm để xem lịch sử chuyển trạng thái"
+                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border cursor-pointer hover:opacity-85 transition-opacity ${stage.color}`}
                       >
-                        {PIPELINE_STAGES.map((st) => (
-                          <option key={st.key} value={st.key}>
-                            {st.label} ({st.viLabel})
-                          </option>
-                        ))}
-                      </select>
+                        {stage.label} ({stage.viLabel})
+                      </button>
                       {isOverdueSevenDays(c.pipelineStage, c.lastActivityAt) && (
                         <span
                           title="Quá 7 ngày chưa cập nhật"
@@ -270,14 +250,18 @@ export default function CustomerListView({
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center gap-1 text-[11px] text-slate-500 mt-1">
+                    <button
+                      type="button"
+                      onClick={() => onViewStageHistory(c)}
+                      className="flex items-center gap-1 text-[11px] text-slate-500 hover:text-[#1677FF] mt-1 cursor-pointer"
+                    >
                       <Clock className="w-3 h-3 text-slate-400" />
                       <span>
                         {new Date(
                           c.stageChangedAt || c.updatedAt
                         ).toLocaleString("vi-VN")}
                       </span>
-                    </div>
+                    </button>
                   </td>
                   <td className="py-3 px-4 whitespace-nowrap text-center">
                     <button

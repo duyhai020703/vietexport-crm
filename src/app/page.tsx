@@ -10,6 +10,7 @@ import AppShell from "@/components/AppShell";
 import CustomerListView from "@/components/crm/CustomerListView";
 import CustomerFormModal from "@/components/crm/CustomerFormModal";
 import LostReasonModal from "@/components/crm/LostReasonModal";
+import StageHistoryModal from "@/components/crm/StageHistoryModal";
 import type { CustomerDTO, UserDTO } from "@/types/crm";
 import { CHANNEL_OPTIONS, PIPELINE_STAGES } from "@/lib/constants";
 
@@ -32,6 +33,7 @@ export default function CrmHomePage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<CustomerDTO | null>(null);
   const [lostTarget, setLostTarget] = useState<CustomerDTO | null>(null);
+  const [historyCustomer, setHistoryCustomer] = useState<CustomerDTO | null>(null);
 
   const loadUsers = useCallback(async () => {
     const res = await fetch("/api/users");
@@ -313,7 +315,7 @@ export default function CrmHomePage() {
           <CustomerListView
             customers={customers}
             canDelete={isManagerOrAdmin}
-            onStageChange={handleStageChange}
+            onViewStageHistory={(c) => setHistoryCustomer(c)}
             onEdit={(c) => {
               setEditingCustomer(c);
               setFormOpen(true);
@@ -339,6 +341,12 @@ export default function CrmHomePage() {
         companyName={lostTarget?.companyName ?? ""}
         onCancel={() => setLostTarget(null)}
         onConfirm={handleConfirmLost}
+      />
+
+      {/* Stage History Dialog */}
+      <StageHistoryModal
+        customer={historyCustomer}
+        onClose={() => setHistoryCustomer(null)}
       />
     </AppShell>
   );

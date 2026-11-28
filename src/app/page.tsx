@@ -190,20 +190,13 @@ export default function CrmHomePage() {
             <div className="flex flex-wrap items-center gap-3">
               <div className="flex items-center gap-2.5">
                 <span className="w-1 h-5 rounded-full bg-[#1677FF] shrink-0" />
-                <div>
-                  <h1 className="text-base sm:text-lg font-bold text-slate-900 leading-tight">
-                    Quản lý Khách hàng Xuất khẩu (CRM)
-                  </h1>
-                  <p className="text-xs text-slate-500">
-                    {isManagerOrAdmin
-                      ? `Đang xem toàn bộ khách hàng (${customers.length})`
-                      : `Khách hàng do ${currentUser?.name ?? "bạn"} phụ trách (${customers.length})`}
-                  </p>
-                </div>
+                <h1 className="text-base sm:text-lg font-bold text-slate-900 leading-tight">
+                  Quản lý Khách hàng Xuất khẩu (CRM)
+                </h1>
               </div>
 
               {/* Pipeline Stage Filter Buttons */}
-              <div className="bg-[#F8FAFC] border border-[#E5EAF2] rounded-xl p-1 flex flex-wrap items-center gap-1.5">
+              <div className="bg-[#F8FAFC] border border-[#E5EAF2] rounded-xl p-1.5 flex flex-wrap items-center gap-1.5">
                 {PIPELINE_STAGES.map((st) => {
                   const isActive = stageFilter === st.key;
                   const activeMap: Record<string, string> = {
@@ -223,7 +216,7 @@ export default function CrmHomePage() {
                         )
                       }
                       title={`${st.label} (${st.viLabel}) — ${st.description}`}
-                      className={`px-3 py-1.5 rounded-lg border text-[11px] font-bold uppercase tracking-wide transition-all ${
+                      className={`px-3.5 py-2 rounded-lg border text-xs font-bold uppercase tracking-wide transition-all ${
                         isActive
                           ? activeMap[st.key] ??
                             "bg-[#1677FF] text-white border-[#1677FF] shadow-xs"
@@ -237,7 +230,7 @@ export default function CrmHomePage() {
                 <button
                   type="button"
                   onClick={() => setStageFilter("ALL")}
-                  className={`px-3 py-1.5 rounded-lg border text-[11px] font-bold uppercase tracking-wide transition-all ${
+                  className={`px-3.5 py-2 rounded-lg border text-xs font-bold uppercase tracking-wide transition-all ${
                     stageFilter === "ALL"
                       ? "bg-[#1677FF] text-white border-[#1677FF] shadow-xs"
                       : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"

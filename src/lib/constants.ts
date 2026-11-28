@@ -78,7 +78,7 @@ export const INCOTERM_OPTIONS = ["EXW", "FOB", "CFR", "CIF"] as const;
 export const PRODUCT_CATEGORY_OPTIONS = [
   "Siêu Mỏng",
   "Cuốn",
-  "Đa nem",
+  "Chả giò / Đa nem",
   "Mè",
   "Trộn / Gia vị",
   "OEM",

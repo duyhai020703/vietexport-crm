@@ -1,10 +1,14 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
-import { Edit2, Package, Plus, Search, Trash2, X } from "lucide-react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { Edit2, FileSpreadsheet, Package, Plus, Search, Trash2, Upload, X } from "lucide-react";
 import AppShell from "@/components/AppShell";
 import type { ProductDTO, UserDTO } from "@/types/crm";
 import { formatUSD, PRODUCT_CATEGORY_OPTIONS } from "@/lib/constants";
+import {
+  parseProductsFromExcelBuffer,
+  type ParsedExcelProduct,
+} from "@/lib/excelProductParser";
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<ProductDTO[]>([]);
@@ -30,6 +34,13 @@ export default function ProductsPage() {
   const [minMarginPercent, setMinMarginPercent] = useState("15");
   const [formError, setFormError] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // Import Excel state
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
+  const [importRows, setImportRows] = useState<ParsedExcelProduct[]>([]);
+  const [importError, setImportError] = useState("");
+  const [importing, setImporting] = useState(false);
 
   const loadProducts = useCallback(async () => {
     setLoading(true);
@@ -151,6 +162,51 @@ export default function ProductsPage() {
     loadProducts();
   }
 
+  async function handleExcelFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setImportError("");
+    try {
+      const buffer = await file.arrayBuffer();
+      const parsed = parseProductsFromExcelBuffer(buffer);
+      if (parsed.length === 0) {
+        alert("Không tìm thấy dữ liệu sản phẩm hợp lệ trong file Excel.");
+        return;
+      }
+      setImportRows(parsed);
+      setImportOpen(true);
+    } catch {
+      alert("Không thể đọc file Excel. Vui lòng kiểm tra định dạng .xlsx / .xls.");
+    }
+  }
+
+  async function handleConfirmImport() {
+    if (importRows.length === 0) return;
+    setImporting(true);
+    setImportError("");
+    try {
+      const res = await fetch("/api/products/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ products: importRows }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setImportError(data.error || "Import thất bại.");
+        return;
+      }
+      setImportOpen(false);
+      setImportRows([]);
+      alert(
+        `Import thành công: ${data.createdCount} mã mới, ${data.updatedCount} mã cập nhật.`
+      );
+      loadProducts();
+    } finally {
+      setImporting(false);
+    }
+  }
+
   return (
     <AppShell
       onUserChanged={(u) => {
@@ -168,14 +224,31 @@ export default function ProductsPage() {
               SKU, Net Weight, Quy cách thùng, CBM, định mức Container 20ft/40HC và giá bán
             </p>
           </div>
-          <button
-            type="button"
-            onClick={openCreate}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold text-white bg-[#1677FF] hover:bg-[#0E63DB] shadow-xs"
-          >
-            <Plus className="w-4 h-4" />
-            Thêm mã hàng
-          </button>
+          <div className="flex items-center gap-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".xlsx,.xls,.csv"
+              onChange={handleExcelFileChange}
+              className="hidden"
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-sm font-semibold text-slate-700 bg-white border border-[#E5EAF2] hover:bg-slate-50 shadow-2xs"
+            >
+              <Upload className="w-4 h-4 text-[#059669]" />
+              Import Excel
+            </button>
+            <button
+              type="button"
+              onClick={openCreate}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold text-white bg-[#1677FF] hover:bg-[#0E63DB] shadow-xs"
+            >
+              <Plus className="w-4 h-4" />
+              Thêm mã hàng
+            </button>
+          </div>
         </div>
 
         <div className="bg-white rounded-xl border border-[#E5EAF2] p-3 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
@@ -605,6 +678,151 @@ export default function ProductsPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* Import Excel Preview Modal */}
+      {importOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-2 sm:p-4">
+          <div className="bg-white rounded-xl shadow-xl border border-[#E5EAF2] w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-[#E5EAF2] bg-[#F8FAFC]">
+              <div className="flex items-center gap-2.5">
+                <FileSpreadsheet className="w-5 h-5 text-[#059669]" />
+                <div>
+                  <h2 className="text-base font-bold text-slate-900">
+                    Xem trước dữ liệu Import Excel ({importRows.length} mã hàng)
+                  </h2>
+                  <p className="text-xs text-slate-500">
+                    Đã tự động tách Tên Anh/Việt, ánh xạ Phân loại, Net Weight, Số gói/thùng, CBM &amp; Định mức Cont (bỏ qua cột Giá &amp; Ảnh)
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setImportOpen(false)}
+                className="text-slate-400 hover:text-slate-600 p-1"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-auto p-4 space-y-3">
+              {importError && (
+                <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-sm">
+                  {importError}
+                </div>
+              )}
+
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="bg-[#F8FAFC] border-b border-[#E5EAF2] text-slate-500 uppercase">
+                    <th className="py-2 px-2.5">Mã SKU</th>
+                    <th className="py-2 px-2.5">Phân loại</th>
+                    <th className="py-2 px-2.5">Tên sản phẩm (Việt / Anh)</th>
+                    <th className="py-2 px-2.5">Net / Quy cách</th>
+                    <th className="py-2 px-2.5">Size / CBM</th>
+                    <th className="py-2 px-2.5">Cont 20 / 40HC</th>
+                    <th className="py-2 px-2.5 text-right">Xóa</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#EEF2F7]">
+                  {importRows.map((row, idx) => (
+                    <tr key={idx} className="hover:bg-[#F8FAFC]">
+                      <td className="py-2 px-2.5">
+                        <input
+                          type="text"
+                          value={row.sku}
+                          onChange={(e) =>
+                            setImportRows((prev) =>
+                              prev.map((r, i) =>
+                                i === idx
+                                  ? { ...r, sku: e.target.value.toUpperCase() }
+                                  : r
+                              )
+                            )
+                          }
+                          className="w-36 rounded border border-slate-300 px-2 py-1 font-mono text-xs"
+                        />
+                      </td>
+                      <td className="py-2 px-2.5">
+                        <select
+                          value={row.category}
+                          onChange={(e) =>
+                            setImportRows((prev) =>
+                              prev.map((r, i) =>
+                                i === idx ? { ...r, category: e.target.value } : r
+                              )
+                            )
+                          }
+                          className="rounded border border-slate-300 px-2 py-1 text-xs bg-white"
+                        >
+                          {PRODUCT_CATEGORY_OPTIONS.map((cat) => (
+                            <option key={cat} value={cat}>
+                              {cat}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+                      <td className="py-2 px-2.5">
+                        <div className="font-semibold text-slate-900">
+                          {row.name}
+                        </div>
+                        {row.englishName && (
+                          <div className="text-slate-500">{row.englishName}</div>
+                        )}
+                      </td>
+                      <td className="py-2 px-2.5 whitespace-nowrap">
+                        {row.netWeightGrams}g • {row.packsPerCarton} gói/th
+                      </td>
+                      <td className="py-2 px-2.5 whitespace-nowrap">
+                        {row.cartonDimensions || "—"} ({row.cbm ?? "—"})
+                      </td>
+                      <td className="py-2 px-2.5 whitespace-nowrap">
+                        {row.capacity20ft ?? "—"} / {row.capacity40hc ?? "—"}
+                      </td>
+                      <td className="py-2 px-2.5 text-right">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setImportRows((prev) =>
+                              prev.filter((_, i) => i !== idx)
+                            )
+                          }
+                          className="p-1 text-slate-400 hover:text-rose-600"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex items-center justify-between px-5 py-3.5 border-t border-[#E5EAF2] bg-[#F8FAFC]">
+              <span className="text-xs text-slate-500">
+                SKU trùng sẽ được cập nhật thông số mới; SKU mới sẽ được thêm vào danh mục.
+              </span>
+              <div className="flex items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setImportOpen(false)}
+                  className="px-4 py-2 rounded-lg text-sm font-medium text-slate-700 bg-slate-200/70 hover:bg-slate-200"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="button"
+                  disabled={importing || importRows.length === 0}
+                  onClick={handleConfirmImport}
+                  className="px-5 py-2 rounded-lg text-sm font-semibold text-white bg-[#059669] hover:bg-emerald-700 disabled:opacity-50"
+                >
+                  {importing
+                    ? "Đang Import..."
+                    : `Xác nhận Import (${importRows.length} mã)`}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

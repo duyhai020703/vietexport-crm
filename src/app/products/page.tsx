@@ -14,6 +14,7 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<ProductDTO[]>([]);
   const [currentUser, setCurrentUser] = useState<UserDTO | null>(null);
   const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("ALL");
   const [loading, setLoading] = useState(true);
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -63,6 +64,11 @@ export default function ProductsPage() {
     const t = setTimeout(loadProducts, 200);
     return () => clearTimeout(t);
   }, [loadProducts]);
+
+  const filteredProducts = products.filter((p) => {
+    if (categoryFilter === "ALL") return true;
+    return p.category === categoryFilter;
+  });
 
   const isManagerOrAdmin =
     currentUser?.role === "ADMIN" || currentUser?.role === "MANAGER";
@@ -251,8 +257,8 @@ export default function ProductsPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-[#E5EAF2] p-3 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
-          <div className="relative max-w-md">
+        <div className="bg-white rounded-xl border border-[#E5EAF2] p-3 shadow-[0_1px_2px_rgba(15,23,42,0.03)] flex flex-wrap items-center gap-3">
+          <div className="relative flex-1 min-w-[220px] max-w-md">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
@@ -262,20 +268,32 @@ export default function ProductsPage() {
               className="w-full pl-9 pr-3 py-1.5 rounded-lg border border-slate-200 text-sm focus:border-[#1677FF] focus:outline-none"
             />
           </div>
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm bg-white focus:border-[#1677FF] focus:outline-none"
+          >
+            <option value="ALL">Tất cả Phân loại</option>
+            {PRODUCT_CATEGORY_OPTIONS.map((cat) => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* Mobile Cards */}
         <div className="md:hidden space-y-3">
-          {loading && products.length === 0 ? (
+          {loading && filteredProducts.length === 0 ? (
             <div className="bg-white rounded-xl border border-[#E5EAF2] p-8 text-center text-slate-500 text-sm">
               Đang tải danh mục sản phẩm...
             </div>
-          ) : products.length === 0 ? (
+          ) : filteredProducts.length === 0 ? (
             <div className="bg-white rounded-xl border border-[#E5EAF2] p-8 text-center text-slate-500 text-sm">
               Chưa có mã hàng nào.
             </div>
           ) : (
-            products.map((p) => (
+            filteredProducts.map((p) => (
               <div
                 key={p.id}
                 className="bg-white rounded-xl border border-[#E5EAF2] p-3.5 shadow-[0_1px_2px_rgba(15,23,42,0.03)] space-y-2"
@@ -341,6 +359,7 @@ export default function ProductsPage() {
               <thead>
                 <tr className="bg-[#F8FAFC] border-b border-[#E5EAF2] text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   <th className="py-3 px-4">Mã SKU</th>
+                  <th className="py-3 px-4">Phân loại</th>
                   <th className="py-3 px-4">Tên sản phẩm</th>
                   <th className="py-3 px-4">Net Weight / Quy cách</th>
                   <th className="py-3 px-4">Kích thước / CBM</th>
@@ -352,41 +371,45 @@ export default function ProductsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#EEF2F7] text-sm">
-                {loading && products.length === 0 ? (
+                {loading && filteredProducts.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={isManagerOrAdmin ? 7 : 6}
+                      colSpan={isManagerOrAdmin ? 8 : 7}
                       className="py-10 text-center text-slate-500"
                     >
                       Đang tải danh mục sản phẩm...
                     </td>
                   </tr>
-                ) : products.length === 0 ? (
+                ) : filteredProducts.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={isManagerOrAdmin ? 7 : 6}
+                      colSpan={isManagerOrAdmin ? 8 : 7}
                       className="py-10 text-center text-slate-500"
                     >
                       Chưa có mã hàng nào.
                     </td>
                   </tr>
                 ) : (
-                  products.map((p) => (
+                  filteredProducts.map((p) => (
                     <tr key={p.id} className="hover:bg-[#F8FAFC]">
                       <td className="py-3 px-4 font-mono text-xs font-semibold whitespace-nowrap">
                         <span className="inline-block px-2 py-0.5 rounded bg-[#EBF4FF] text-[#1677FF] border border-[#BFDBFE]/60">
                           {p.sku}
                         </span>
                       </td>
+                      <td className="py-3 px-4 whitespace-nowrap">
+                        {p.category ? (
+                          <span className="inline-block px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold">
+                            {p.category}
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 text-xs">—</span>
+                        )}
+                      </td>
                       <td className="py-3 px-4 font-semibold text-slate-900">
                         <div className="flex items-center gap-2">
                           <Package className="w-4 h-4 text-slate-400 shrink-0" />
                           <span>{p.name}</span>
-                          {p.category && (
-                            <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[11px] font-medium">
-                              {p.category}
-                            </span>
-                          )}
                         </div>
                         {p.englishName && (
                           <div className="text-xs font-normal text-slate-600 pl-6">

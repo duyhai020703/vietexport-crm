@@ -15,6 +15,8 @@ import {
   Trash2,
 } from "lucide-react";
 import type { OrderDTO, ProductDTO } from "@/types/crm";
+import CustomSelect from "@/components/ui/CustomSelect";
+import CustomDatePicker from "@/components/ui/CustomDatePicker";
 import {
   calculateKg,
   computeOrderItemWeightKg,
@@ -620,11 +622,9 @@ export default function CustomerOrdersTab({
             <label className="block text-xs font-medium text-slate-700 mb-1">
               Ngày đặt hàng
             </label>
-            <input
-              type="date"
+            <CustomDatePicker
               value={orderDate}
-              onChange={(e) => setOrderDate(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-[#1677FF] focus:outline-none"
+              onChange={(v) => setOrderDate(v)}
             />
           </div>
 
@@ -700,11 +700,9 @@ export default function CustomerOrdersTab({
             <label className="block text-xs font-medium text-slate-700 mb-1">
               Lịch SX dự kiến
             </label>
-            <input
-              type="date"
+            <CustomDatePicker
               value={estProductionDate}
-              onChange={(e) => setEstProductionDate(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-[#1677FF] focus:outline-none"
+              onChange={(v) => setEstProductionDate(v)}
             />
           </div>
 
@@ -714,11 +712,9 @@ export default function CustomerOrdersTab({
                 <label className="block text-xs font-medium text-slate-700 mb-1">
                   ETD (Tàu chạy)
                 </label>
-                <input
-                  type="date"
+                <CustomDatePicker
                   value={etd}
-                  onChange={(e) => setEtd(e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-[#1677FF] focus:outline-none"
+                  onChange={(v) => setEtd(v)}
                 />
               </div>
 
@@ -726,11 +722,9 @@ export default function CustomerOrdersTab({
                 <label className="block text-xs font-medium text-slate-700 mb-1">
                   ETA (Tàu đến)
                 </label>
-                <input
-                  type="date"
+                <CustomDatePicker
                   value={eta}
-                  onChange={(e) => setEta(e.target.value)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-[#1677FF] focus:outline-none"
+                  onChange={(v) => setEta(v)}
                 />
               </div>
             </>
@@ -955,19 +949,19 @@ export default function CustomerOrdersTab({
                         <label className="block text-[11px] font-medium text-slate-600 mb-1">
                           Tên Sản Phẩm (SKU)
                         </label>
-                        <select
+                        <CustomSelect
+                          searchable
                           value={item.productId}
-                          onChange={(e) =>
-                            updateItem(idx, "productId", e.target.value)
+                          onChange={(val) =>
+                            updateItem(idx, "productId", val)
                           }
-                          className="w-full rounded border border-slate-300 bg-white px-2.5 py-1.5 text-xs sm:text-sm"
-                        >
-                          {products.map((p) => (
-                            <option key={p.id} value={p.id}>
-                              {p.name} ({p.sku})
-                            </option>
-                          ))}
-                        </select>
+                          options={products.map((p) => ({
+                            value: p.id,
+                            label: `${p.name} (${p.sku})`,
+                            subLabel: p.category ?? undefined,
+                          }))}
+                          placeholder="-- Chọn sản phẩm --"
+                        />
                       </div>
 
                       <div className="sm:col-span-4">

@@ -710,6 +710,43 @@ export default function CustomerFormModal({
                   ))}
                 </div>
               )}
+
+              {(customer?.stageHistories?.length ?? 0) > 0 && (
+                <div className="pt-2 border-t border-slate-100">
+                  <h4 className="text-xs font-semibold text-slate-700 mb-2">
+                    Lịch sử chuyển giai đoạn
+                  </h4>
+                  <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+                    {customer!.stageHistories!.map((h) => (
+                      <div
+                        key={h.id}
+                        className="text-xs bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 flex items-center justify-between gap-2"
+                      >
+                        <div>
+                          <span className="font-medium text-slate-600">
+                            {h.fromStage ?? "Khởi tạo"}
+                          </span>{" "}
+                          →{" "}
+                          <span className="font-semibold text-[#1677FF]">
+                            {h.toStage}
+                          </span>
+                          {h.note && (
+                            <span className="text-rose-600 ml-1.5">
+                              ({h.note})
+                            </span>
+                          )}
+                          <span className="text-[11px] text-slate-400 ml-2">
+                            bởi {h.changedBy?.name ?? "Hệ thống"}
+                          </span>
+                        </div>
+                        <span className="text-[11px] text-slate-500 shrink-0 tabular-nums">
+                          {new Date(h.changedAt).toLocaleString("vi-VN")}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

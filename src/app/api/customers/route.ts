@@ -101,6 +101,11 @@ export async function GET(req: NextRequest) {
           take: 5,
           include: { user: { select: { id: true, name: true } } },
         },
+        stageHistories: {
+          orderBy: { changedAt: "desc" },
+          take: 10,
+          include: { changedBy: { select: { id: true, name: true } } },
+        },
         _count: { select: { orders: true, quotations: true } },
       },
       orderBy: { updatedAt: "desc" },
@@ -219,14 +224,27 @@ export async function POST(req: NextRequest) {
         source,
         salesRepId: assignedSalesRepId,
         pipelineStage,
+        stageChangedAt: new Date(),
         lostReason: pipelineStage === "LOST" ? lostReason?.trim() : null,
         contacts: {
           create: validContacts,
+        },
+        stageHistories: {
+          create: {
+            fromStage: null,
+            toStage: pipelineStage,
+            changedById: currentUser.id,
+            note: pipelineStage === "LOST" ? lostReason?.trim() : null,
+          },
         },
       },
       include: {
         salesRep: { select: { id: true, name: true, email: true, role: true } },
         contacts: { orderBy: [{ isPrimary: "desc" }, { createdAt: "asc" }] },
+        stageHistories: {
+          orderBy: { changedAt: "desc" },
+          include: { changedBy: { select: { id: true, name: true } } },
+        },
         _count: { select: { orders: true } },
       },
     });

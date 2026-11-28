@@ -1,18 +1,23 @@
 "use client";
 
 import React from "react";
-import { Edit2, ShoppingBag, Trash2, AlertTriangle } from "lucide-react";
+import { Edit2, ShoppingBag, Trash2, AlertTriangle, Clock } from "lucide-react";
 import type { CustomerDTO } from "@/types/crm";
 import {
   getChannelLabel,
   getSourceLabel,
   getStageMeta,
   isOverdueSevenDays,
+  PIPELINE_STAGES,
 } from "@/lib/constants";
 
 interface CustomerListViewProps {
   customers: CustomerDTO[];
   canDelete?: boolean;
+  onStageChange: (
+    customer: CustomerDTO,
+    targetStage: CustomerDTO["pipelineStage"]
+  ) => void;
   onEdit: (customer: CustomerDTO) => void;
   onDelete: (customer: CustomerDTO) => void;
 }
@@ -20,6 +25,7 @@ interface CustomerListViewProps {
 export default function CustomerListView({
   customers,
   canDelete = true,
+  onStageChange,
   onEdit,
   onDelete,
 }: CustomerListViewProps) {
@@ -58,10 +64,30 @@ export default function CustomerListView({
                     {c.companyName}
                   </button>
                 </div>
-                <span
-                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold border shrink-0 ${stage.color}`}
+                <select
+                  value={c.pipelineStage}
+                  onChange={(e) =>
+                    onStageChange(
+                      c,
+                      e.target.value as CustomerDTO["pipelineStage"]
+                    )
+                  }
+                  className={`inline-flex items-center px-2 py-1 rounded-full text-[11px] font-semibold border shrink-0 cursor-pointer focus:outline-none ${stage.color}`}
                 >
-                  {stage.label}
+                  {PIPELINE_STAGES.map((st) => (
+                    <option key={st.key} value={st.key}>
+                      {st.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex items-center gap-1 text-[11px] text-slate-500">
+                <Clock className="w-3 h-3" />
+                <span>
+                  Chuyển giai đoạn:{" "}
+                  {new Date(c.stageChangedAt || c.updatedAt).toLocaleString(
+                    "vi-VN"
+                  )}
                 </span>
               </div>
 
@@ -150,7 +176,7 @@ export default function CustomerListView({
               <th className="py-3 px-4">Quốc gia / Cảng đến</th>
               <th className="py-3 px-4">Phân loại / Nguồn</th>
               <th className="py-3 px-4">PIC Chính</th>
-              <th className="py-3 px-4">Trạng thái</th>
+              <th className="py-3 px-4">Trạng thái &amp; Thời gian chuyển</th>
               <th className="py-3 px-4 text-center">Đơn hàng</th>
               <th className="py-3 px-4">Sale phụ trách</th>
               <th className="py-3 px-4 text-right">Thao tác</th>
@@ -218,11 +244,22 @@ export default function CustomerListView({
                   </td>
                   <td className="py-3 px-4 whitespace-nowrap">
                     <div className="flex items-center gap-1.5">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${stage.color}`}
+                      <select
+                        value={c.pipelineStage}
+                        onChange={(e) =>
+                          onStageChange(
+                            c,
+                            e.target.value as CustomerDTO["pipelineStage"]
+                          )
+                        }
+                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border cursor-pointer focus:outline-none ${stage.color}`}
                       >
-                        {stage.label}
-                      </span>
+                        {PIPELINE_STAGES.map((st) => (
+                          <option key={st.key} value={st.key}>
+                            {st.label} ({st.viLabel})
+                          </option>
+                        ))}
+                      </select>
                       {isOverdueSevenDays(c.pipelineStage, c.lastActivityAt) && (
                         <span
                           title="Quá 7 ngày chưa cập nhật"
@@ -232,6 +269,14 @@ export default function CustomerListView({
                           &gt;7d
                         </span>
                       )}
+                    </div>
+                    <div className="flex items-center gap-1 text-[11px] text-slate-500 mt-1">
+                      <Clock className="w-3 h-3 text-slate-400" />
+                      <span>
+                        {new Date(
+                          c.stageChangedAt || c.updatedAt
+                        ).toLocaleString("vi-VN")}
+                      </span>
                     </div>
                   </td>
                   <td className="py-3 px-4 whitespace-nowrap text-center">

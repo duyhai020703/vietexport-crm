@@ -98,6 +98,7 @@ model User {
   activities          CustomerActivity[]
   quotations          Quotation[]        @relation("QuoteSalesRep")
   approvedQuotations  Quotation[]        @relation("QuoteApprover")
+  stageChanges        CustomerStageHistory[]
   orders              Order[]
   createdAt           DateTime           @default(now())
   updatedAt           DateTime           @updatedAt
@@ -127,12 +128,14 @@ model Customer {
   source            CustomerSource
   salesRepId        String
   salesRep          User               @relation(fields: [salesRepId], references: [id])
-  pipelineStage     PipelineStage      @default(NEW_LEAD)
+  pipelineStage     PipelineStage          @default(NEW_LEAD)
+  stageChangedAt    DateTime               @default(now())
   lostReason        String?
-  lastActivityAt    DateTime           @default(now())
+  lastActivityAt    DateTime               @default(now())
   nextFollowUpDate  DateTime?
   contacts          CustomerContact[]
   activities        CustomerActivity[]
+  stageHistories    CustomerStageHistory[]
   quotations        Quotation[]
   orders            Order[]
   createdAt         DateTime           @default(now())
@@ -173,6 +176,21 @@ model CustomerActivity {
 
   @@index([customerId])
   @@map("customer_activities")
+}
+
+model CustomerStageHistory {
+  id          String         @id @default(cuid())
+  customerId  String
+  customer    Customer       @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  fromStage   PipelineStage?
+  toStage     PipelineStage
+  changedById String
+  changedBy   User           @relation(fields: [changedById], references: [id])
+  note        String?
+  changedAt   DateTime       @default(now())
+
+  @@index([customerId])
+  @@map("customer_stage_histories")
 }
 
 model Product {

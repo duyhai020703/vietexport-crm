@@ -27,6 +27,10 @@ export async function GET(
           orderBy: { createdAt: "desc" },
           include: { user: { select: { id: true, name: true } } },
         },
+        stageHistories: {
+          orderBy: { changedAt: "desc" },
+          include: { changedBy: { select: { id: true, name: true } } },
+        },
         orders: {
           orderBy: { orderDate: "desc" },
           include: {
@@ -188,6 +192,22 @@ export async function PATCH(
         }
       }
 
+      const stageChanged =
+        pipelineStage !== undefined && pipelineStage !== existing.pipelineStage;
+
+      if (stageChanged) {
+        await tx.customerStageHistory.create({
+          data: {
+            customerId: id,
+            fromStage: existing.pipelineStage,
+            toStage: pipelineStage!,
+            changedById: currentUser.id,
+            note:
+              pipelineStage === "LOST" ? nextLostReason?.trim() || null : null,
+          },
+        });
+      }
+
       return tx.customer.update({
         where: { id },
         data: {
@@ -202,6 +222,7 @@ export async function PATCH(
             ? { salesRepId }
             : {}),
           ...(pipelineStage !== undefined ? { pipelineStage } : {}),
+          ...(stageChanged ? { stageChangedAt: new Date() } : {}),
           lastActivityAt: new Date(),
           lostReason:
             nextStage === "LOST" ? nextLostReason?.trim() || null : null,
@@ -213,6 +234,11 @@ export async function PATCH(
             orderBy: { createdAt: "desc" },
             take: 5,
             include: { user: { select: { id: true, name: true } } },
+          },
+          stageHistories: {
+            orderBy: { changedAt: "desc" },
+            take: 10,
+            include: { changedBy: { select: { id: true, name: true } } },
           },
           _count: { select: { orders: true, quotations: true } },
         },

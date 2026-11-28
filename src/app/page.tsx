@@ -2,14 +2,11 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  Kanban,
-  List,
   Plus,
   Search,
   RefreshCw,
 } from "lucide-react";
 import AppShell from "@/components/AppShell";
-import KanbanBoard from "@/components/crm/KanbanBoard";
 import CustomerListView from "@/components/crm/CustomerListView";
 import CustomerFormModal from "@/components/crm/CustomerFormModal";
 import LostReasonModal from "@/components/crm/LostReasonModal";
@@ -17,7 +14,6 @@ import type { CustomerDTO, UserDTO } from "@/types/crm";
 import { CHANNEL_OPTIONS, PIPELINE_STAGES } from "@/lib/constants";
 
 export default function CrmHomePage() {
-  const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
   const [customers, setCustomers] = useState<CustomerDTO[]>([]);
   const [users, setUsers] = useState<UserDTO[]>([]);
   const [currentUser, setCurrentUser] = useState<UserDTO | null>(null);
@@ -198,34 +194,6 @@ export default function CrmHomePage() {
           </div>
 
           <div className="flex items-center gap-2.5">
-            {/* View Switcher */}
-            <div className="inline-flex rounded-lg bg-white border border-[#E5EAF2] p-0.5 shadow-2xs">
-              <button
-                type="button"
-                onClick={() => setViewMode("kanban")}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
-                  viewMode === "kanban"
-                    ? "bg-[#1677FF] text-white"
-                    : "text-slate-600 hover:bg-[#F4F7FB]"
-                }`}
-              >
-                <Kanban className="w-3.5 h-3.5" />
-                Kanban
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("list")}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
-                  viewMode === "list"
-                    ? "bg-[#1677FF] text-white"
-                    : "text-slate-600 hover:bg-[#F4F7FB]"
-                }`}
-              >
-                <List className="w-3.5 h-3.5" />
-                Bảng
-              </button>
-            </div>
-
             <button
               type="button"
               onClick={() => {
@@ -292,20 +260,18 @@ export default function CrmHomePage() {
             ))}
           </select>
 
-          {viewMode === "list" && (
-            <select
-              value={stageFilter}
-              onChange={(e) => setStageFilter(e.target.value)}
-              className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm bg-white focus:border-blue-500 focus:outline-none"
-            >
-              <option value="ALL">Tất cả Trạng thái</option>
-              {PIPELINE_STAGES.map((st) => (
-                <option key={st.key} value={st.key}>
-                  {st.label} ({st.viLabel})
-                </option>
-              ))}
-            </select>
-          )}
+          <select
+            value={stageFilter}
+            onChange={(e) => setStageFilter(e.target.value)}
+            className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm bg-white focus:border-blue-500 focus:outline-none"
+          >
+            <option value="ALL">Tất cả Trạng thái</option>
+            {PIPELINE_STAGES.map((st) => (
+              <option key={st.key} value={st.key}>
+                {st.label} ({st.viLabel})
+              </option>
+            ))}
+          </select>
 
           {isManagerOrAdmin && (
             <select
@@ -343,19 +309,11 @@ export default function CrmHomePage() {
           <div className="bg-white rounded-xl border border-slate-200 p-12 text-center text-slate-500 text-sm">
             Đang tải dữ liệu khách hàng...
           </div>
-        ) : viewMode === "kanban" ? (
-          <KanbanBoard
-            customers={customers}
-            onStageChange={handleStageChange}
-            onSelectCustomer={(c) => {
-              setEditingCustomer(c);
-              setFormOpen(true);
-            }}
-          />
         ) : (
           <CustomerListView
             customers={customers}
             canDelete={isManagerOrAdmin}
+            onStageChange={handleStageChange}
             onEdit={(c) => {
               setEditingCustomer(c);
               setFormOpen(true);

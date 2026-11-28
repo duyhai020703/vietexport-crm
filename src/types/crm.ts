@@ -27,6 +27,17 @@ export interface CustomerActivityDTO {
   createdAt: string;
 }
 
+export interface CustomerStageHistoryDTO {
+  id: string;
+  customerId: string;
+  fromStage: CustomerDTO["pipelineStage"] | null;
+  toStage: CustomerDTO["pipelineStage"];
+  changedById: string;
+  changedBy?: { id: string; name: string };
+  note: string | null;
+  changedAt: string;
+}
+
 export interface CustomerDTO {
   id: string;
   customerCode: string;
@@ -44,10 +55,12 @@ export interface CustomerDTO {
     | "ACTIVE_WON"
     | "LOST";
   lostReason: string | null;
+  stageChangedAt?: string;
   lastActivityAt: string;
   nextFollowUpDate: string | null;
   contacts: CustomerContactDTO[];
   activities?: CustomerActivityDTO[];
+  stageHistories?: CustomerStageHistoryDTO[];
   _count?: { orders: number; quotations?: number };
   createdAt: string;
   updatedAt: string;

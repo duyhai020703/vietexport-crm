@@ -183,113 +183,157 @@ export default function CrmHomePage() {
       }}
     >
       <div className="space-y-4">
-        {/* Header Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h1 className="text-xl font-bold text-slate-900">
-              Quản lý Khách hàng Xuất khẩu (CRM)
-            </h1>
-            <p className="text-sm text-slate-500">
-              {isManagerOrAdmin
-                ? `Đang xem toàn bộ khách hàng (${customers.length})`
-                : `Khách hàng do ${currentUser?.name ?? "bạn"} phụ trách (${customers.length})`}
-            </p>
+        {/* Header & Filter Card */}
+        <div className="bg-white rounded-2xl border border-[#E5EAF2] p-4 shadow-[0_1px_3px_rgba(15,23,42,0.03)] space-y-3.5">
+          {/* Top Row: Title + Stage Filter Pills + Actions */}
+          <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-2.5">
+                <span className="w-1 h-5 rounded-full bg-[#1677FF] shrink-0" />
+                <div>
+                  <h1 className="text-base sm:text-lg font-bold text-slate-900 leading-tight">
+                    Quản lý Khách hàng Xuất khẩu (CRM)
+                  </h1>
+                  <p className="text-xs text-slate-500">
+                    {isManagerOrAdmin
+                      ? `Đang xem toàn bộ khách hàng (${customers.length})`
+                      : `Khách hàng do ${currentUser?.name ?? "bạn"} phụ trách (${customers.length})`}
+                  </p>
+                </div>
+              </div>
+
+              {/* Pipeline Stage Filter Buttons */}
+              <div className="bg-[#F8FAFC] border border-[#E5EAF2] rounded-xl p-1 flex flex-wrap items-center gap-1.5">
+                {PIPELINE_STAGES.map((st) => {
+                  const isActive = stageFilter === st.key;
+                  const activeMap: Record<string, string> = {
+                    NEW_LEAD: "bg-slate-700 text-white border-slate-700 shadow-xs",
+                    QUOTED: "bg-[#1677FF] text-white border-[#1677FF] shadow-xs",
+                    NEGOTIATING: "bg-[#D97706] text-white border-[#D97706] shadow-xs",
+                    ACTIVE_WON: "bg-[#059669] text-white border-[#059669] shadow-xs",
+                    LOST: "bg-[#DC2626] text-white border-[#DC2626] shadow-xs",
+                  };
+                  return (
+                    <button
+                      key={st.key}
+                      type="button"
+                      onClick={() =>
+                        setStageFilter((prev) =>
+                          prev === st.key ? "ALL" : st.key
+                        )
+                      }
+                      title={`${st.label} (${st.viLabel}) — ${st.description}`}
+                      className={`px-3 py-1.5 rounded-lg border text-[11px] font-bold uppercase tracking-wide transition-all ${
+                        isActive
+                          ? activeMap[st.key] ??
+                            "bg-[#1677FF] text-white border-[#1677FF] shadow-xs"
+                          : `${st.color} hover:opacity-85`
+                      }`}
+                    >
+                      {st.viLabel}
+                    </button>
+                  );
+                })}
+                <button
+                  type="button"
+                  onClick={() => setStageFilter("ALL")}
+                  className={`px-3 py-1.5 rounded-lg border text-[11px] font-bold uppercase tracking-wide transition-all ${
+                    stageFilter === "ALL"
+                      ? "bg-[#1677FF] text-white border-[#1677FF] shadow-xs"
+                      : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                  }`}
+                >
+                  Tất cả
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={loadCustomers}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-[#E5EAF2] bg-white text-xs font-bold uppercase tracking-wide text-slate-700 hover:bg-slate-50 shadow-2xs transition-colors"
+                title="Làm mới"
+              >
+                <RefreshCw
+                  className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`}
+                />
+                Làm mới
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingCustomer(null);
+                  setFormOpen(true);
+                }}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wide text-white bg-[#1677FF] hover:bg-[#0E63DB] shadow-sm transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                Thêm khách hàng
+              </button>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2.5">
-            <button
-              type="button"
-              onClick={() => {
-                setEditingCustomer(null);
-                setFormOpen(true);
-              }}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold text-white bg-[#1677FF] hover:bg-[#0E63DB] shadow-xs transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              Thêm khách hàng
-            </button>
+          {/* Bottom Row: Compact Search (Left) + Secondary Filters (Right) */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5 pt-1 border-t border-slate-100">
+            <div className="relative w-full sm:w-72 lg:w-80 shrink-0">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Tìm tên công ty, mã CUS, PIC, email..."
+                className="w-full pl-9 pr-3 py-1.5 rounded-xl border border-[#E5EAF2] bg-white text-sm text-slate-800 placeholder:text-slate-400 focus:border-[#1677FF] focus:outline-none"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2">
+              <CustomSelect
+                value={countryFilter}
+                onChange={(val) => setCountryFilter(val)}
+                options={[
+                  { value: "ALL", label: "Tất cả Quốc gia" },
+                  ...uniqueCountries.map((c) => ({ value: c, label: c })),
+                ]}
+                className="sm:w-40"
+              />
+
+              <CustomSelect
+                value={portFilter}
+                onChange={(val) => setPortFilter(val)}
+                options={[
+                  { value: "ALL", label: "Tất cả Cảng đến" },
+                  ...uniquePorts.map((p) => ({ value: p, label: p })),
+                ]}
+                className="sm:w-40"
+              />
+
+              <CustomSelect
+                value={channelFilter}
+                onChange={(val) => setChannelFilter(val)}
+                options={[
+                  { value: "ALL", label: "Tất cả Phân loại" },
+                  ...CHANNEL_OPTIONS.map((ch) => ({
+                    value: ch.value,
+                    label: ch.label.split(" ")[0],
+                  })),
+                ]}
+                className="sm:w-38"
+              />
+
+              {isManagerOrAdmin && (
+                <CustomSelect
+                  value={salesRepFilter}
+                  onChange={(val) => setSalesRepFilter(val)}
+                  options={[
+                    { value: "ALL", label: "Tất cả Sale" },
+                    ...users.map((u) => ({ value: u.id, label: u.name })),
+                  ]}
+                  className="sm:w-40"
+                />
+              )}
+            </div>
           </div>
-        </div>
-
-        {/* Search & Filter Bar */}
-        <div className="bg-white rounded-xl border border-[#E5EAF2] p-3 shadow-[0_1px_2px_rgba(15,23,42,0.03)] grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 sm:gap-2.5">
-          <div className="relative col-span-2 sm:flex-1 sm:min-w-[220px]">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Tìm tên công ty, mã CUS, PIC, email..."
-              className="w-full pl-9 pr-3 py-1.5 rounded-lg border border-slate-200 text-sm focus:border-blue-500 focus:outline-none"
-            />
-          </div>
-
-          <CustomSelect
-            value={countryFilter}
-            onChange={(val) => setCountryFilter(val)}
-            options={[
-              { value: "ALL", label: "Tất cả Quốc gia" },
-              ...uniqueCountries.map((c) => ({ value: c, label: c })),
-            ]}
-            className="sm:w-44"
-          />
-
-          <CustomSelect
-            value={portFilter}
-            onChange={(val) => setPortFilter(val)}
-            options={[
-              { value: "ALL", label: "Tất cả Cảng đến" },
-              ...uniquePorts.map((p) => ({ value: p, label: p })),
-            ]}
-            className="sm:w-44"
-          />
-
-          <CustomSelect
-            value={channelFilter}
-            onChange={(val) => setChannelFilter(val)}
-            options={[
-              { value: "ALL", label: "Tất cả Phân loại" },
-              ...CHANNEL_OPTIONS.map((ch) => ({
-                value: ch.value,
-                label: ch.label.split(" ")[0],
-              })),
-            ]}
-            className="sm:w-40"
-          />
-
-          <CustomSelect
-            value={stageFilter}
-            onChange={(val) => setStageFilter(val)}
-            options={[
-              { value: "ALL", label: "Tất cả Trạng thái" },
-              ...PIPELINE_STAGES.map((st) => ({
-                value: st.key,
-                label: `${st.label} (${st.viLabel})`,
-              })),
-            ]}
-            className="sm:w-52"
-          />
-
-          {isManagerOrAdmin && (
-            <CustomSelect
-              value={salesRepFilter}
-              onChange={(val) => setSalesRepFilter(val)}
-              options={[
-                { value: "ALL", label: "Tất cả Sale" },
-                ...users.map((u) => ({ value: u.id, label: u.name })),
-              ]}
-              className="sm:w-44"
-            />
-          )}
-
-          <button
-            type="button"
-            onClick={loadCustomers}
-            className="p-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100"
-            title="Làm mới"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-          </button>
         </div>
 
         {errorMsg && (

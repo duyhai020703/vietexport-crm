@@ -57,6 +57,7 @@ export interface ProductDTO {
   id: string;
   sku: string;
   name: string;
+  englishName?: string | null;
   category?: string | null;
   specification: string | null;
   unit: string;

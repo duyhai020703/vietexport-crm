@@ -16,6 +16,7 @@ export default function ProductsPage() {
   const [editing, setEditing] = useState<ProductDTO | null>(null);
   const [sku, setSku] = useState("");
   const [name, setName] = useState("");
+  const [englishName, setEnglishName] = useState("");
   const [category, setCategory] = useState("");
   const [specification, setSpecification] = useState("");
   const [unit, setUnit] = useState("Thùng");
@@ -27,7 +28,6 @@ export default function ProductsPage() {
   const [capacity40hc, setCapacity40hc] = useState("1150");
   const [costPrice, setCostPrice] = useState("0");
   const [minMarginPercent, setMinMarginPercent] = useState("15");
-  const [basePrice, setBasePrice] = useState("");
   const [formError, setFormError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -60,6 +60,7 @@ export default function ProductsPage() {
     setEditing(null);
     setSku("");
     setName("");
+    setEnglishName("");
     setCategory("Siêu Mỏng");
     setSpecification("");
     setUnit("Thùng");
@@ -71,7 +72,6 @@ export default function ProductsPage() {
     setCapacity40hc("1150");
     setCostPrice("0");
     setMinMarginPercent("15");
-    setBasePrice("");
     setFormError("");
     setModalOpen(true);
   }
@@ -80,6 +80,7 @@ export default function ProductsPage() {
     setEditing(p);
     setSku(p.sku);
     setName(p.name);
+    setEnglishName(p.englishName ?? "");
     setCategory(p.category ?? "");
     setSpecification(p.specification ?? "");
     setUnit(p.unit);
@@ -91,7 +92,6 @@ export default function ProductsPage() {
     setCapacity40hc(p.capacity40hc !== null ? String(p.capacity40hc) : "");
     setCostPrice(p.costPrice !== undefined ? String(p.costPrice) : "0");
     setMinMarginPercent(String(p.minMarginPercent ?? 15));
-    setBasePrice(String(p.basePrice));
     setFormError("");
     setModalOpen(true);
   }
@@ -99,8 +99,8 @@ export default function ProductsPage() {
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     setFormError("");
-    if (!sku.trim() || !name.trim() || !unit.trim() || basePrice === "") {
-      setFormError("Vui lòng nhập đầy đủ thông tin bắt buộc.");
+    if (!sku.trim() || !name.trim() || !unit.trim()) {
+      setFormError("Vui lòng nhập đầy đủ Mã SKU, Tên sản phẩm và Đơn vị tính.");
       return;
     }
 
@@ -114,6 +114,7 @@ export default function ProductsPage() {
         body: JSON.stringify({
           sku: sku.trim(),
           name: name.trim(),
+          englishName: englishName.trim() || null,
           category: category.trim() || null,
           specification: specification.trim() || null,
           unit: unit.trim(),
@@ -125,7 +126,6 @@ export default function ProductsPage() {
           capacity40hc: capacity40hc ? Number(capacity40hc) : null,
           ...(isManagerOrAdmin ? { costPrice: Number(costPrice) || 0 } : {}),
           minMarginPercent: Number(minMarginPercent) || 15,
-          basePrice: Number(basePrice),
         }),
       });
       const data = await res.json();
@@ -215,6 +215,11 @@ export default function ProductsPage() {
                     <div className="font-bold text-slate-900 text-sm mt-1">
                       {p.name}
                     </div>
+                    {p.englishName && (
+                      <div className="text-xs text-slate-500">
+                        {p.englishName}
+                      </div>
+                    )}
                     {p.category && (
                       <span className="inline-block mt-0.5 px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 text-[10px] font-medium">
                         {p.category}
@@ -222,11 +227,8 @@ export default function ProductsPage() {
                     )}
                   </div>
                   <div className="text-right shrink-0">
-                    <div className="font-bold text-slate-900 text-sm tabular-nums">
-                      {formatUSD(p.basePrice)}
-                    </div>
-                    <span className="text-[11px] text-slate-500">
-                      / {p.unit}
+                    <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[11px] font-medium">
+                      {p.unit}
                     </span>
                   </div>
                 </div>
@@ -273,7 +275,6 @@ export default function ProductsPage() {
                   {isManagerOrAdmin && (
                     <th className="py-3 px-4 text-right">Giá vốn</th>
                   )}
-                  <th className="py-3 px-4 text-right">Đơn giá bán</th>
                   <th className="py-3 px-4 text-right">Thao tác</th>
                 </tr>
               </thead>
@@ -281,7 +282,7 @@ export default function ProductsPage() {
                 {loading && products.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={isManagerOrAdmin ? 8 : 7}
+                      colSpan={isManagerOrAdmin ? 7 : 6}
                       className="py-10 text-center text-slate-500"
                     >
                       Đang tải danh mục sản phẩm...
@@ -290,7 +291,7 @@ export default function ProductsPage() {
                 ) : products.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={isManagerOrAdmin ? 8 : 7}
+                      colSpan={isManagerOrAdmin ? 7 : 6}
                       className="py-10 text-center text-slate-500"
                     >
                       Chưa có mã hàng nào.
@@ -314,6 +315,11 @@ export default function ProductsPage() {
                             </span>
                           )}
                         </div>
+                        {p.englishName && (
+                          <div className="text-xs font-normal text-slate-600 pl-6">
+                            {p.englishName}
+                          </div>
+                        )}
                         {p.specification && (
                           <div className="text-xs font-normal text-slate-500 pl-6">
                             {p.specification}
@@ -343,12 +349,6 @@ export default function ProductsPage() {
                           {formatUSD(p.costPrice ?? 0)}
                         </td>
                       )}
-                      <td className="py-3 px-4 text-right font-bold text-slate-900 whitespace-nowrap tabular-nums">
-                        {formatUSD(p.basePrice)}
-                        <div className="text-[11px] font-normal text-slate-500">
-                          / {p.unit}
-                        </div>
-                      </td>
                       <td className="py-3 px-4 text-right whitespace-nowrap">
                         <div className="inline-flex items-center gap-1">
                           <button
@@ -531,15 +531,13 @@ export default function ProductsPage() {
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-slate-700 mb-1">
-                    Đơn giá bán (USD) <span className="text-rose-500">*</span>
+                    Tên tiếng Anh (Commodity)
                   </label>
                   <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    required
-                    value={basePrice}
-                    onChange={(e) => setBasePrice(e.target.value)}
+                    type="text"
+                    value={englishName}
+                    onChange={(e) => setEnglishName(e.target.value)}
+                    placeholder="VD: Tan Nhien Super thin Rice paper 300 g"
                     className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
                   />
                 </div>

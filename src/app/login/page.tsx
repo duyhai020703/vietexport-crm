@@ -28,11 +28,10 @@ export default function LoginPage() {
       }
 
       if (data.user?.mustChangePassword) {
-        router.push("/change-password");
+        window.location.href = "/change-password";
       } else {
-        router.push("/");
+        window.location.href = "/";
       }
-      router.refresh();
     } catch {
       setError("Không thể kết nối máy chủ.");
     } finally {
@@ -116,3 +115,4 @@ export default function LoginPage() {
     </div>
   );
 }
+

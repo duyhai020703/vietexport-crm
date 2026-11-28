@@ -152,7 +152,7 @@ export default function QuotationsPage() {
               {
                 productId: first.id,
                 quantity: first.capacity40hc ?? 1150,
-                unitPrice: first.basePrice,
+                unitPrice: 0,
               },
             ]
           : []
@@ -174,7 +174,6 @@ export default function QuotationsPage() {
           return {
             ...it,
             productId: String(val),
-            unitPrice: prod ? prod.basePrice : it.unitPrice,
             quantity: prod?.capacity40hc ?? it.quantity,
           };
         }
@@ -726,7 +725,7 @@ export default function QuotationsPage() {
                       if (!p) return;
                       setItems((prev) => [
                         ...prev,
-                        { productId: p.id, quantity: 500, unitPrice: p.basePrice },
+                        { productId: p.id, quantity: 500, unitPrice: 0 },
                       ]);
                     }}
                     className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-[#EBF4FF] text-[#1677FF] text-xs font-semibold"

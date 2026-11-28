@@ -47,6 +47,7 @@ export async function POST(req: NextRequest) {
     const {
       sku,
       name,
+      englishName,
       category,
       specification,
       unit,
@@ -58,10 +59,11 @@ export async function POST(req: NextRequest) {
       capacity40hc,
       costPrice = 0,
       minMarginPercent = 15,
-      basePrice,
+      basePrice = 0,
     } = body as {
       sku?: string;
       name?: string;
+      englishName?: string;
       category?: string;
       specification?: string;
       unit?: string;
@@ -76,9 +78,9 @@ export async function POST(req: NextRequest) {
       basePrice?: number;
     };
 
-    if (!sku?.trim() || !name?.trim() || !unit?.trim() || basePrice === undefined) {
+    if (!sku?.trim() || !name?.trim() || !unit?.trim()) {
       return NextResponse.json(
-        { error: "Vui lòng nhập đầy đủ Mã SKU, Tên sản phẩm, Đơn vị tính và Đơn giá." },
+        { error: "Vui lòng nhập đầy đủ Mã SKU, Tên sản phẩm và Đơn vị tính." },
         { status: 400 }
       );
     }
@@ -98,6 +100,7 @@ export async function POST(req: NextRequest) {
       data: {
         sku: sku.trim().toUpperCase(),
         name: name.trim(),
+        englishName: englishName?.trim() || null,
         category: category?.trim() || null,
         specification: specification?.trim() || null,
         unit: unit.trim(),
@@ -115,7 +118,7 @@ export async function POST(req: NextRequest) {
             : null,
         costPrice: Number(costPrice) || 0,
         minMarginPercent: Number(minMarginPercent) || 15,
-        basePrice: Number(basePrice),
+        basePrice: Number(basePrice) || 0,
       },
     });
 

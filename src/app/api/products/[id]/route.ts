@@ -11,6 +11,7 @@ export async function PATCH(
     const {
       sku,
       name,
+      englishName,
       category,
       specification,
       unit,
@@ -26,6 +27,7 @@ export async function PATCH(
     } = body as {
       sku?: string;
       name?: string;
+      englishName?: string | null;
       category?: string | null;
       specification?: string | null;
       unit?: string;
@@ -65,6 +67,12 @@ export async function PATCH(
       data: {
         ...(sku !== undefined ? { sku: sku.trim().toUpperCase() } : {}),
         ...(name !== undefined ? { name: name.trim() } : {}),
+        ...(englishName !== undefined
+          ? { englishName: englishName?.trim() || null }
+          : {}),
+        ...(category !== undefined
+          ? { category: category?.trim() || null }
+          : {}),
         ...(category !== undefined
           ? { category: category?.trim() || null }
           : {}),

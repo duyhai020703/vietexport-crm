@@ -165,7 +165,7 @@ export default function OrdersPage() {
             {
               productId: defaultProd.id,
               quantity: defaultProd.capacity40hc ?? 1000,
-              unitPrice: defaultProd.basePrice,
+              unitPrice: 0,
             },
           ]
         : []
@@ -270,11 +270,9 @@ export default function OrdersPage() {
       prev.map((item, i) => {
         if (i !== idx) return item;
         if (field === "productId") {
-          const prod = products.find((p) => p.id === value);
           return {
             ...item,
             productId: String(value),
-            unitPrice: prod ? prod.basePrice : item.unitPrice,
           };
         }
         return { ...item, [field]: Number(value) };
@@ -1158,7 +1156,7 @@ export default function OrdersPage() {
                       if (!p) return;
                       setItems((prev) => [
                         ...prev,
-                        { productId: p.id, quantity: 500, unitPrice: p.basePrice },
+                        { productId: p.id, quantity: 500, unitPrice: 0 },
                       ]);
                     }}
                     className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-[#EBF4FF] text-[#1677FF] text-xs font-semibold"

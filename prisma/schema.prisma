@@ -32,9 +32,13 @@ enum CustomerSource {
 
 enum PipelineStage {
   NEW_LEAD
+  CONTACTED
+  INQUIRY_QUALIFIED
   QUOTED
+  SAMPLE_SENT
   NEGOTIATING
   ACTIVE_WON
+  DORMANT
   LOST
 }
 
@@ -175,6 +179,7 @@ model Product {
   id               String          @id @default(cuid())
   sku              String          @unique
   name             String
+  englishName      String?
   category         String?
   specification    String?
   unit             String
@@ -186,7 +191,7 @@ model Product {
   capacity40hc     Int?
   costPrice        Float           @default(0)
   minMarginPercent Float           @default(15)
-  basePrice        Float
+  basePrice        Float           @default(0)
   quotationItems   QuotationItem[]
   orderItems       OrderItem[]
   createdAt        DateTime        @default(now())

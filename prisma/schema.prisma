@@ -80,19 +80,37 @@ enum PaymentType {
 }
 
 model User {
-  id                 String             @id @default(cuid())
-  name               String
-  email              String             @unique
-  role               Role               @default(SALE)
-  customers          Customer[]
-  activities         CustomerActivity[]
-  quotations         Quotation[]        @relation("QuoteSalesRep")
-  approvedQuotations Quotation[]        @relation("QuoteApprover")
-  orders             Order[]
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
+  id                  String             @id @default(cuid())
+  name                String
+  email               String             @unique
+  passwordHash        String             @default("")
+  role                Role               @default(SALE)
+  isActive            Boolean            @default(true)
+  mustChangePassword  Boolean            @default(false)
+  failedLoginAttempts Int                @default(0)
+  lockedUntil         DateTime?
+  sessions            Session[]
+  customers           Customer[]
+  activities          CustomerActivity[]
+  quotations          Quotation[]        @relation("QuoteSalesRep")
+  approvedQuotations  Quotation[]        @relation("QuoteApprover")
+  orders              Order[]
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
 
   @@map("users")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("sessions")
 }
 
 model Customer {

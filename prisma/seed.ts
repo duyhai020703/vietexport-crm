@@ -1,4 +1,5 @@
 import "dotenv/config";
+import bcrypt from "bcryptjs";
 import { Pool } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client";
@@ -15,6 +16,7 @@ const prisma = new PrismaClient({ adapter });
 async function main() {
   console.log("Bắt đầu khởi tạo dữ liệu mẫu BRD TanNhienExport-CRM...");
 
+  await prisma.session.deleteMany();
   await prisma.orderPayment.deleteMany();
   await prisma.orderItem.deleteMany();
   await prisma.order.deleteMany();
@@ -26,12 +28,17 @@ async function main() {
   await prisma.product.deleteMany();
   await prisma.user.deleteMany();
 
-  // 1. 4 Nhân viên theo đúng BRD (Trưởng phòng/Admin, Sales Admin, 2 Sale Export)
+  // 1. 5 Nhân viên theo đúng BRD (Mật khẩu mặc định: 123456)
+  const defaultPasswordHash = await bcrypt.hash("123456", 10);
+
   const admin = await prisma.user.create({
     data: {
       name: "Nguyễn Minh Quân",
       email: "quan.nguyen@tannhien.vn",
+      passwordHash: defaultPasswordHash,
       role: "ADMIN",
+      isActive: true,
+      mustChangePassword: false,
     },
   });
 
@@ -39,7 +46,10 @@ async function main() {
     data: {
       name: "Trần Thu Hương",
       email: "huong.tran@tannhien.vn",
+      passwordHash: defaultPasswordHash,
       role: "MANAGER",
+      isActive: true,
+      mustChangePassword: false,
     },
   });
 
@@ -47,7 +57,10 @@ async function main() {
     data: {
       name: "Võ Thị Mỹ Linh",
       email: "linh.vo@tannhien.vn",
+      passwordHash: defaultPasswordHash,
       role: "SALES_ADMIN",
+      isActive: true,
+      mustChangePassword: false,
     },
   });
 
@@ -55,7 +68,10 @@ async function main() {
     data: {
       name: "Lê Hoàng Hải",
       email: "hai.le@tannhien.vn",
+      passwordHash: defaultPasswordHash,
       role: "SALE",
+      isActive: true,
+      mustChangePassword: false,
     },
   });
 
@@ -63,7 +79,10 @@ async function main() {
     data: {
       name: "Phạm Ngọc Linh",
       email: "linh.pham@tannhien.vn",
+      passwordHash: defaultPasswordHash,
       role: "SALE",
+      isActive: true,
+      mustChangePassword: false,
     },
   });
 

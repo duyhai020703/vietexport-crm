@@ -11,6 +11,8 @@ import {
   X,
 } from "lucide-react";
 import CustomerOrdersTab from "@/components/crm/CustomerOrdersTab";
+import CustomSelect from "@/components/ui/CustomSelect";
+import CustomDatePicker from "@/components/ui/CustomDatePicker";
 import type {
   CustomerActivityDTO,
   CustomerContactDTO,
@@ -428,75 +430,64 @@ export default function CustomerFormModal({
               <label className="block text-sm font-medium text-slate-700 mb-1">
                 Phân loại khách hàng
               </label>
-              <select
+              <CustomSelect
                 value={channel}
-                onChange={(e) =>
-                  setChannel(e.target.value as CustomerDTO["channel"])
+                onChange={(val) =>
+                  setChannel(val as CustomerDTO["channel"])
                 }
-                className="w-full rounded-lg border border-slate-300 px-3.5 py-2 text-sm bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
-              >
-                {CHANNEL_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
+                options={CHANNEL_OPTIONS.map((opt) => ({
+                  value: opt.value,
+                  label: opt.label,
+                }))}
+              />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
                 Nguồn khách
               </label>
-              <select
+              <CustomSelect
                 value={source}
-                onChange={(e) =>
-                  setSource(e.target.value as CustomerDTO["source"])
+                onChange={(val) =>
+                  setSource(val as CustomerDTO["source"])
                 }
-                className="w-full rounded-lg border border-slate-300 px-3.5 py-2 text-sm bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
-              >
-                {SOURCE_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
+                options={SOURCE_OPTIONS.map((opt) => ({
+                  value: opt.value,
+                  label: opt.label,
+                }))}
+              />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
                 Giai đoạn Pipeline
               </label>
-              <select
+              <CustomSelect
                 value={pipelineStage}
-                onChange={(e) =>
-                  setPipelineStage(e.target.value as CustomerDTO["pipelineStage"])
+                onChange={(val) =>
+                  setPipelineStage(val as CustomerDTO["pipelineStage"])
                 }
-                className="w-full rounded-lg border border-slate-300 px-3.5 py-2 text-sm bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
-              >
-                {PIPELINE_STAGES.map((st) => (
-                  <option key={st.key} value={st.key}>
-                    {st.label} ({st.viLabel})
-                  </option>
-                ))}
-              </select>
+                options={PIPELINE_STAGES.map((st) => ({
+                  value: st.key,
+                  label: `${st.label} (${st.viLabel})`,
+                }))}
+              />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
                 Sale phụ trách
               </label>
-              <select
+              <CustomSelect
                 disabled={!canReassign}
                 value={salesRepId}
-                onChange={(e) => setSalesRepId(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3.5 py-2 text-sm bg-white disabled:bg-slate-100 disabled:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
-              >
-                {users.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.name} ({u.role})
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setSalesRepId(val)}
+                searchable={users.length > 6}
+                options={users.map((u) => ({
+                  value: u.id,
+                  label: `${u.name} (${u.role})`,
+                }))}
+              />
               {!canReassign && (
                 <p className="text-[11px] text-slate-400 mt-1">
                   Chỉ Manager/Admin mới có quyền chuyển giao khách hàng.
@@ -639,26 +630,25 @@ export default function CustomerFormModal({
 
               <div className="p-3 rounded-lg border border-slate-200 bg-slate-50/70 space-y-2.5">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                  <select
+                  <CustomSelect
                     value={actChannel}
-                    onChange={(e) => setActChannel(e.target.value)}
-                    className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
-                  >
-                    <option value="Email">Email</option>
-                    <option value="WhatsApp">WhatsApp</option>
-                    <option value="WeChat">WeChat</option>
-                    <option value="Call">Gọi điện</option>
-                    <option value="Meeting">Họp / Hội chợ</option>
-                  </select>
+                    onChange={(val) => setActChannel(val)}
+                    options={[
+                      { value: "Email", label: "Email" },
+                      { value: "WhatsApp", label: "WhatsApp" },
+                      { value: "WeChat", label: "WeChat" },
+                      { value: "Call", label: "Gọi điện" },
+                      { value: "Meeting", label: "Họp / Hội chợ" },
+                    ]}
+                  />
                   <div className="sm:col-span-2 flex items-center gap-2">
                     <span className="text-xs text-slate-500 whitespace-nowrap">
                       Hẹn chăm sóc:
                     </span>
-                    <input
-                      type="date"
+                    <CustomDatePicker
                       value={actFollowUp}
-                      onChange={(e) => setActFollowUp(e.target.value)}
-                      className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none"
+                      onChange={(val) => setActFollowUp(val)}
+                      className="flex-1"
                     />
                   </div>
                 </div>

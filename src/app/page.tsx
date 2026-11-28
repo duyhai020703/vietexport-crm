@@ -11,6 +11,7 @@ import CustomerListView from "@/components/crm/CustomerListView";
 import CustomerFormModal from "@/components/crm/CustomerFormModal";
 import LostReasonModal from "@/components/crm/LostReasonModal";
 import StageHistoryModal from "@/components/crm/StageHistoryModal";
+import CustomSelect from "@/components/ui/CustomSelect";
 import type { CustomerDTO, UserDTO } from "@/types/crm";
 import { CHANNEL_OPTIONS, PIPELINE_STAGES } from "@/lib/constants";
 
@@ -223,71 +224,62 @@ export default function CrmHomePage() {
             />
           </div>
 
-          <select
+          <CustomSelect
             value={countryFilter}
-            onChange={(e) => setCountryFilter(e.target.value)}
-            className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm bg-white focus:border-blue-500 focus:outline-none"
-          >
-            <option value="ALL">Tất cả Quốc gia</option>
-            {uniqueCountries.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
+            onChange={(val) => setCountryFilter(val)}
+            options={[
+              { value: "ALL", label: "Tất cả Quốc gia" },
+              ...uniqueCountries.map((c) => ({ value: c, label: c })),
+            ]}
+            className="sm:w-44"
+          />
 
-          <select
+          <CustomSelect
             value={portFilter}
-            onChange={(e) => setPortFilter(e.target.value)}
-            className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm bg-white focus:border-blue-500 focus:outline-none"
-          >
-            <option value="ALL">Tất cả Cảng đến</option>
-            {uniquePorts.map((p) => (
-              <option key={p} value={p}>
-                {p}
-              </option>
-            ))}
-          </select>
+            onChange={(val) => setPortFilter(val)}
+            options={[
+              { value: "ALL", label: "Tất cả Cảng đến" },
+              ...uniquePorts.map((p) => ({ value: p, label: p })),
+            ]}
+            className="sm:w-44"
+          />
 
-          <select
+          <CustomSelect
             value={channelFilter}
-            onChange={(e) => setChannelFilter(e.target.value)}
-            className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm bg-white focus:border-blue-500 focus:outline-none"
-          >
-            <option value="ALL">Tất cả Phân loại</option>
-            {CHANNEL_OPTIONS.map((ch) => (
-              <option key={ch.value} value={ch.value}>
-                {ch.label.split(" ")[0]}
-              </option>
-            ))}
-          </select>
+            onChange={(val) => setChannelFilter(val)}
+            options={[
+              { value: "ALL", label: "Tất cả Phân loại" },
+              ...CHANNEL_OPTIONS.map((ch) => ({
+                value: ch.value,
+                label: ch.label.split(" ")[0],
+              })),
+            ]}
+            className="sm:w-40"
+          />
 
-          <select
+          <CustomSelect
             value={stageFilter}
-            onChange={(e) => setStageFilter(e.target.value)}
-            className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm bg-white focus:border-blue-500 focus:outline-none"
-          >
-            <option value="ALL">Tất cả Trạng thái</option>
-            {PIPELINE_STAGES.map((st) => (
-              <option key={st.key} value={st.key}>
-                {st.label} ({st.viLabel})
-              </option>
-            ))}
-          </select>
+            onChange={(val) => setStageFilter(val)}
+            options={[
+              { value: "ALL", label: "Tất cả Trạng thái" },
+              ...PIPELINE_STAGES.map((st) => ({
+                value: st.key,
+                label: `${st.label} (${st.viLabel})`,
+              })),
+            ]}
+            className="sm:w-52"
+          />
 
           {isManagerOrAdmin && (
-            <select
+            <CustomSelect
               value={salesRepFilter}
-              onChange={(e) => setSalesRepFilter(e.target.value)}
-              className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm bg-white focus:border-blue-500 focus:outline-none"
-            >
-              <option value="ALL">Tất cả Sale</option>
-              {users.map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.name}
-                </option>
-              ))}
-            </select>
+              onChange={(val) => setSalesRepFilter(val)}
+              options={[
+                { value: "ALL", label: "Tất cả Sale" },
+                ...users.map((u) => ({ value: u.id, label: u.name })),
+              ]}
+              className="sm:w-44"
+            />
           )}
 
           <button

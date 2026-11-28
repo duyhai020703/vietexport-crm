@@ -14,6 +14,7 @@ import {
   XCircle,
 } from "lucide-react";
 import AppShell from "@/components/AppShell";
+import CustomSelect from "@/components/ui/CustomSelect";
 import type {
   CustomerDTO,
   ProductDTO,
@@ -322,17 +323,18 @@ export default function QuotationsPage() {
             />
           </div>
 
-          <select
+          <CustomSelect
             value={approvalFilter}
-            onChange={(e) => setApprovalFilter(e.target.value)}
-            className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm bg-white focus:border-[#1677FF] focus:outline-none"
-          >
-            <option value="ALL">Tất cả Trạng thái duyệt</option>
-            <option value="AUTO_APPROVED">Đã duyệt (Tự động)</option>
-            <option value="APPROVED">Đã duyệt (Trưởng phòng)</option>
-            <option value="PENDING_APPROVAL">Chờ Trưởng phòng duyệt</option>
-            <option value="REJECTED">Từ chối</option>
-          </select>
+            onChange={(val) => setApprovalFilter(val)}
+            options={[
+              { value: "ALL", label: "Tất cả Trạng thái duyệt" },
+              { value: "AUTO_APPROVED", label: "Đã duyệt (Tự động)" },
+              { value: "APPROVED", label: "Đã duyệt (Trưởng phòng)" },
+              { value: "PENDING_APPROVAL", label: "Chờ Trưởng phòng duyệt" },
+              { value: "REJECTED", label: "Từ chối" },
+            ]}
+            className="w-56"
+          />
         </div>
 
         {/* Table */}
@@ -540,56 +542,53 @@ export default function QuotationsPage() {
                   <label className="block text-xs font-medium text-slate-700 mb-1">
                     Khách hàng <span className="text-rose-500">*</span>
                   </label>
-                  <select
-                    required
+                  <CustomSelect
                     value={customerId}
-                    onChange={(e) => setCustomerId(e.target.value)}
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white focus:border-[#1677FF] focus:outline-none"
-                  >
-                    <option value="">-- Chọn khách hàng --</option>
-                    {customers.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.customerCode} — {c.companyName} ({c.countryRegion})
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(val) => setCustomerId(val)}
+                    searchable
+                    placeholder="-- Chọn khách hàng --"
+                    options={[
+                      { value: "", label: "-- Chọn khách hàng --" },
+                      ...customers.map((c) => ({
+                        value: c.id,
+                        label: `${c.customerCode} — ${c.companyName} (${c.countryRegion})`,
+                      })),
+                    ]}
+                  />
                 </div>
 
                 <div>
                   <label className="block text-xs font-medium text-slate-700 mb-1">
                     Loại báo giá
                   </label>
-                  <select
+                  <CustomSelect
                     value={quoteType}
-                    onChange={(e) =>
-                      setQuoteType(e.target.value as "STANDARD" | "OEM")
+                    onChange={(val) =>
+                      setQuoteType(val as "STANDARD" | "OEM")
                     }
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white focus:border-[#1677FF] focus:outline-none"
-                  >
-                    <option value="STANDARD">Standard (Hàng chuẩn)</option>
-                    <option value="OEM">OEM (Gia công / Check Specs)</option>
-                  </select>
+                    options={[
+                      { value: "STANDARD", label: "Standard (Hàng chuẩn)" },
+                      { value: "OEM", label: "OEM (Gia công / Check Specs)" },
+                    ]}
+                  />
                 </div>
 
                 <div>
                   <label className="block text-xs font-medium text-slate-700 mb-1">
                     Điều kiện Incoterms
                   </label>
-                  <select
+                  <CustomSelect
                     value={incoterm}
-                    onChange={(e) =>
+                    onChange={(val) =>
                       setIncoterm(
-                        e.target.value as "EXW" | "FOB" | "CFR" | "CIF"
+                        val as "EXW" | "FOB" | "CFR" | "CIF"
                       )
                     }
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white focus:border-[#1677FF] focus:outline-none"
-                  >
-                    {INCOTERM_OPTIONS.map((inc) => (
-                      <option key={inc} value={inc}>
-                        {inc}
-                      </option>
-                    ))}
-                  </select>
+                    options={INCOTERM_OPTIONS.map((inc) => ({
+                      value: inc,
+                      label: inc,
+                    }))}
+                  />
                 </div>
 
                 <div>
@@ -740,19 +739,19 @@ export default function QuotationsPage() {
                     key={idx}
                     className="grid grid-cols-12 gap-2 items-center bg-slate-50 p-2.5 rounded-lg border border-slate-200"
                   >
-                    <select
+                    <CustomSelect
                       value={item.productId}
-                      onChange={(e) =>
-                        updateItem(idx, "productId", e.target.value)
+                      onChange={(val) =>
+                        updateItem(idx, "productId", val)
                       }
-                      className="col-span-12 sm:col-span-6 rounded border border-slate-300 bg-white px-2.5 py-1.5 text-sm"
-                    >
-                      {products.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.sku} — {p.name}
-                        </option>
-                      ))}
-                    </select>
+                      searchable
+                      placeholder="Chọn sản phẩm..."
+                      options={products.map((p) => ({
+                        value: p.id,
+                        label: `${p.sku} — ${p.name}`,
+                      }))}
+                      className="col-span-12 sm:col-span-6"
+                    />
                     <input
                       type="number"
                       step="1"

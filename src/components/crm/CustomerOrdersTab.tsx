@@ -568,54 +568,48 @@ export default function CustomerOrdersTab({
             <label className="block text-xs font-medium text-slate-700 mb-1">
               Loại đơn hàng
             </label>
-            <select
+            <CustomSelect
               value={orderType}
-              onChange={(e) =>
-                setOrderType(e.target.value as "STANDARD" | "OEM")
+              onChange={(val) =>
+                setOrderType(val as "STANDARD" | "OEM")
               }
-              className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm bg-white focus:border-[#1677FF] focus:outline-none"
-            >
-              <option value="STANDARD">Standard</option>
-              <option value="OEM">OEM</option>
-            </select>
+              options={[
+                { value: "STANDARD", label: "Standard" },
+                { value: "OEM", label: "OEM" },
+              ]}
+            />
           </div>
 
           <div>
             <label className="block text-xs font-medium text-slate-700 mb-1">
               Incoterms
             </label>
-            <select
+            <CustomSelect
               value={incoterm}
-              onChange={(e) =>
-                setIncoterm(e.target.value as "EXW" | "FOB" | "CFR" | "CIF")
+              onChange={(val) =>
+                setIncoterm(val as "EXW" | "FOB" | "CFR" | "CIF")
               }
-              className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm bg-white focus:border-[#1677FF] focus:outline-none"
-            >
-              {INCOTERM_OPTIONS.map((inc) => (
-                <option key={inc} value={inc}>
-                  {inc}
-                </option>
-              ))}
-            </select>
+              options={INCOTERM_OPTIONS.map((inc) => ({
+                value: inc,
+                label: inc,
+              }))}
+            />
           </div>
 
           <div>
             <label className="block text-xs font-medium text-slate-700 mb-1">
               Trạng thái
             </label>
-            <select
+            <CustomSelect
               value={status}
-              onChange={(e) =>
-                setStatus(e.target.value as OrderDTO["status"])
+              onChange={(val) =>
+                setStatus(val as OrderDTO["status"])
               }
-              className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm bg-white focus:border-[#1677FF] focus:outline-none"
-            >
-              {ORDER_STATUS_OPTIONS.map((st) => (
-                <option key={st.value} value={st.value}>
-                  {st.label}
-                </option>
-              ))}
-            </select>
+              options={ORDER_STATUS_OPTIONS.map((st) => ({
+                value: st.value,
+                label: st.label,
+              }))}
+            />
           </div>
 
           <div>
@@ -681,18 +675,18 @@ export default function CustomerOrdersTab({
               <label className="block text-xs font-medium text-slate-700 mb-1">
                 Thanh toán
               </label>
-              <select
+              <CustomSelect
                 value={paymentStatus}
-                onChange={(e) => setPaymentStatus(e.target.value)}
-                className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm bg-white focus:border-[#1677FF] focus:outline-none"
-              >
-                <option value="">-- Chọn trạng thái thanh toán --</option>
-                {ORDER_PAYMENT_STATUS_OPTIONS.map((opt) => (
-                  <option key={opt} value={opt}>
-                    {opt}
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setPaymentStatus(val)}
+                placeholder="-- Chọn trạng thái thanh toán --"
+                options={[
+                  { value: "", label: "-- Chọn trạng thái thanh toán --" },
+                  ...ORDER_PAYMENT_STATUS_OPTIONS.map((opt) => ({
+                    value: opt,
+                    label: opt,
+                  })),
+                ]}
+              />
             </div>
           )}
 
@@ -1062,13 +1056,11 @@ export default function CustomerOrdersTab({
                         <label className="block text-[11px] font-medium text-slate-600 mb-1">
                           Ngày giao hàng
                         </label>
-                        <input
-                          type="date"
+                        <CustomDatePicker
                           value={item.deliveryDate}
-                          onChange={(e) =>
-                            updateItem(idx, "deliveryDate", e.target.value)
+                          onChange={(val) =>
+                            updateItem(idx, "deliveryDate", val)
                           }
-                          className="w-full rounded border border-slate-300 bg-white px-2.5 py-1.5 text-xs sm:text-sm"
                         />
                       </div>
 

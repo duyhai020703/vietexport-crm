@@ -15,6 +15,7 @@ interface CustomSelectProps {
   options: CustomSelectOption[];
   placeholder?: string;
   searchable?: boolean;
+  disabled?: boolean;
   className?: string;
 }
 
@@ -24,6 +25,7 @@ export default function CustomSelect({
   options,
   placeholder = "-- Chọn --",
   searchable = false,
+  disabled = false,
   className = "",
 }: CustomSelectProps) {
   const [open, setOpen] = useState(false);
@@ -63,11 +65,13 @@ export default function CustomSelect({
     <div ref={containerRef} className={`relative ${className}`}>
       <button
         type="button"
+        disabled={disabled}
         onClick={() => {
+          if (disabled) return;
           setOpen((prev) => !prev);
           setQuery("");
         }}
-        className={`w-full flex items-center justify-between gap-2 rounded-xl border bg-white px-3 py-1.5 text-left text-xs sm:text-sm transition-all ${
+        className={`w-full flex items-center justify-between gap-2 rounded-xl border bg-white px-3 py-1.5 text-left text-xs sm:text-sm transition-all disabled:bg-slate-100 disabled:text-slate-500 disabled:cursor-not-allowed ${
           open
             ? "border-[#5B46F6] ring-2 ring-[#5B46F6]/30"
             : "border-slate-300 hover:border-slate-400"
@@ -88,7 +92,7 @@ export default function CustomSelect({
       </button>
 
       {open && (
-        <div className="absolute left-0 right-0 mt-1.5 z-50 bg-white rounded-2xl border border-slate-100 shadow-[0_12px_32px_rgba(15,23,42,0.14)] p-1.5 min-w-[220px]">
+        <div className="absolute left-0 right-0 mt-1.5 z-50 bg-white rounded-2xl border border-slate-100 shadow-[0_12px_32px_rgba(15,23,42,0.14)] p-1.5 min-w-[170px]">
           {searchable && options.length > 6 && (
             <div className="relative mb-1.5 px-1 pt-0.5">
               <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -148,3 +152,4 @@ export default function CustomSelect({
     </div>
   );
 }
+

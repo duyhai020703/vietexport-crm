@@ -22,6 +22,7 @@ import {
   WalletCards,
 } from "lucide-react";
 import AppShell from "@/components/AppShell";
+import CustomSelect from "@/components/ui/CustomSelect";
 import type { UserDTO } from "@/types/crm";
 import { formatNumber, formatUSD } from "@/lib/constants";
 
@@ -178,66 +179,57 @@ export default function DashboardPage() {
           </div>
 
           <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full lg:w-auto">
-            <select
+            <CustomSelect
               value={dateMode}
-              onChange={(e) =>
-                setDateMode(e.target.value as "ORDER_DATE" | "ETD")
-              }
-              className="col-span-2 sm:col-span-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium focus:border-[#1677FF] focus:outline-none"
-            >
-              <option value="ORDER_DATE">Mốc: Ngày ký HĐ (KPI Sale)</option>
-              <option value="ETD">Mốc: Ngày tàu chạy (ETD)</option>
-            </select>
+              onChange={(v) => setDateMode(v as "ORDER_DATE" | "ETD")}
+              options={[
+                { value: "ORDER_DATE", label: "Mốc: Ngày ký HĐ (KPI Sale)" },
+                { value: "ETD", label: "Mốc: Ngày tàu chạy (ETD)" },
+              ]}
+              className="col-span-2 sm:col-span-1 sm:w-56"
+            />
 
-            <select
-              value={month}
-              onChange={(e) => setMonth(Number(e.target.value))}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium focus:border-[#1677FF] focus:outline-none"
-            >
-              {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
-                <option key={m} value={m}>
-                  Tháng {m}
-                </option>
-              ))}
-            </select>
+            <CustomSelect
+              value={String(month)}
+              onChange={(v) => setMonth(Number(v))}
+              options={Array.from({ length: 12 }, (_, i) => i + 1).map((m) => ({
+                value: String(m),
+                label: `Tháng ${m}`,
+              }))}
+              className="sm:w-28"
+            />
 
-            <select
-              value={year}
-              onChange={(e) => setYear(Number(e.target.value))}
-              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium focus:border-[#1677FF] focus:outline-none"
-            >
-              {[year - 1, year, year + 1].map((y) => (
-                <option key={y} value={y}>
-                  Năm {y}
-                </option>
-              ))}
-            </select>
+            <CustomSelect
+              value={String(year)}
+              onChange={(v) => setYear(Number(v))}
+              options={[year - 1, year, year + 1].map((y) => ({
+                value: String(y),
+                label: `Năm ${y}`,
+              }))}
+              className="sm:w-28"
+            />
 
-            <select
+            <CustomSelect
               value={orderType}
-              onChange={(e) =>
-                setOrderType(e.target.value as "ALL" | "STANDARD" | "OEM")
-              }
-              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium focus:border-[#1677FF] focus:outline-none"
-            >
-              <option value="ALL">Standard &amp; OEM</option>
-              <option value="STANDARD">Chỉ Standard</option>
-              <option value="OEM">Chỉ OEM</option>
-            </select>
+              onChange={(v) => setOrderType(v as "ALL" | "STANDARD" | "OEM")}
+              options={[
+                { value: "ALL", label: "Standard & OEM" },
+                { value: "STANDARD", label: "Chỉ Standard" },
+                { value: "OEM", label: "Chỉ OEM" },
+              ]}
+              className="sm:w-40"
+            />
 
             {isManagerOrAdmin && (
-              <select
+              <CustomSelect
                 value={salesRepId}
-                onChange={(e) => setSalesRepId(e.target.value)}
-                className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium focus:border-[#1677FF] focus:outline-none"
-              >
-                <option value="ALL">Tất cả Sale</option>
-                {users.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.name}
-                  </option>
-                ))}
-              </select>
+                onChange={(v) => setSalesRepId(v)}
+                options={[
+                  { value: "ALL", label: "Tất cả Sale" },
+                  ...users.map((u) => ({ value: u.id, label: u.name })),
+                ]}
+                className="sm:w-44"
+              />
             )}
 
             <button

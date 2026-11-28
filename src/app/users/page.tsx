@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { KeyRound, Lock, Plus, Unlock, Users, X } from "lucide-react";
 import AppShell from "@/components/AppShell";
+import CustomSelect from "@/components/ui/CustomSelect";
 import type { Role, UserDTO } from "@/types/crm";
 import { ROLE_LABELS } from "@/lib/constants";
 
@@ -293,18 +294,18 @@ export default function UsersAdminPage() {
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
                   Vai trò (Role)
                 </label>
-                <select
+                <CustomSelect
                   value={role}
-                  onChange={(e) => setRole(e.target.value as Role)}
-                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white"
-                >
-                  <option value="SALE">Sale Export</option>
-                  <option value="SALES_ADMIN">Sales Admin (Điều phối)</option>
-                  <option value="MANAGER">Quản lý (Manager)</option>
-                  {currentUser?.role === "ADMIN" && (
-                    <option value="ADMIN">Trưởng phòng (Admin)</option>
-                  )}
-                </select>
+                  onChange={(val) => setRole(val as Role)}
+                  options={[
+                    { value: "SALE", label: "Sale Export" },
+                    { value: "SALES_ADMIN", label: "Sales Admin (Điều phối)" },
+                    { value: "MANAGER", label: "Quản lý (Manager)" },
+                    ...(currentUser?.role === "ADMIN"
+                      ? [{ value: "ADMIN", label: "Trưởng phòng (Admin)" }]
+                      : []),
+                  ]}
+                />
               </div>
 
               <div>

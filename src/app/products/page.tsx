@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Edit2, FileSpreadsheet, Package, Plus, Search, Trash2, Upload, X } from "lucide-react";
 import AppShell from "@/components/AppShell";
+import CustomSelect from "@/components/ui/CustomSelect";
 import type { ProductDTO, UserDTO } from "@/types/crm";
 import { formatUSD, PRODUCT_CATEGORY_OPTIONS } from "@/lib/constants";
 import {
@@ -268,18 +269,18 @@ export default function ProductsPage() {
               className="w-full pl-9 pr-3 py-1.5 rounded-lg border border-slate-200 text-sm focus:border-[#1677FF] focus:outline-none"
             />
           </div>
-          <select
+          <CustomSelect
             value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm bg-white focus:border-[#1677FF] focus:outline-none"
-          >
-            <option value="ALL">Tất cả Phân loại</option>
-            {PRODUCT_CATEGORY_OPTIONS.map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
-            ))}
-          </select>
+            onChange={(val) => setCategoryFilter(val)}
+            options={[
+              { value: "ALL", label: "Tất cả Phân loại" },
+              ...PRODUCT_CATEGORY_OPTIONS.map((cat) => ({
+                value: cat,
+                label: cat,
+              })),
+            ]}
+            className="w-52"
+          />
         </div>
 
         {/* Mobile Cards */}
@@ -768,23 +769,21 @@ export default function ProductsPage() {
                         />
                       </td>
                       <td className="py-2 px-2.5">
-                        <select
+                        <CustomSelect
                           value={row.category}
-                          onChange={(e) =>
+                          onChange={(val) =>
                             setImportRows((prev) =>
                               prev.map((r, i) =>
-                                i === idx ? { ...r, category: e.target.value } : r
+                                i === idx ? { ...r, category: val } : r
                               )
                             )
                           }
-                          className="rounded border border-slate-300 px-2 py-1 text-xs bg-white"
-                        >
-                          {PRODUCT_CATEGORY_OPTIONS.map((cat) => (
-                            <option key={cat} value={cat}>
-                              {cat}
-                            </option>
-                          ))}
-                        </select>
+                          options={PRODUCT_CATEGORY_OPTIONS.map((cat) => ({
+                            value: cat,
+                            label: cat,
+                          }))}
+                          className="min-w-[140px]"
+                        />
                       </td>
                       <td className="py-2 px-2.5">
                         <div className="font-semibold text-slate-900">

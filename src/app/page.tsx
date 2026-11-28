@@ -27,6 +27,7 @@ export default function CrmHomePage() {
   const [countryFilter, setCountryFilter] = useState("ALL");
   const [portFilter, setPortFilter] = useState("ALL");
   const [channelFilter, setChannelFilter] = useState("ALL");
+  const [customerTypeFilter, setCustomerTypeFilter] = useState("ALL");
   const [stageFilter, setStageFilter] = useState("ALL");
   const [salesRepFilter, setSalesRepFilter] = useState("ALL");
 
@@ -314,6 +315,17 @@ export default function CrmHomePage() {
                 className="sm:w-38"
               />
 
+              <CustomSelect
+                value={customerTypeFilter}
+                onChange={(val) => setCustomerTypeFilter(val)}
+                options={[
+                  { value: "ALL", label: "Khách mới & cũ" },
+                  { value: "NEW", label: "Khách mới (0 đơn chốt)" },
+                  { value: "EXISTING", label: "Khách cũ (Đã có đơn)" },
+                ]}
+                className="sm:w-44"
+              />
+
               {isManagerOrAdmin && (
                 <CustomSelect
                   value={salesRepFilter}
@@ -342,7 +354,11 @@ export default function CrmHomePage() {
           </div>
         ) : (
           <CustomerListView
-            customers={customers}
+            customers={
+              customerTypeFilter === "ALL"
+                ? customers
+                : customers.filter((c) => c.customerType === customerTypeFilter)
+            }
             canDelete={isManagerOrAdmin}
             onViewStageHistory={(c) => setHistoryCustomer(c)}
             onEdit={(c) => {

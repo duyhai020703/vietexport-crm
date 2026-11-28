@@ -62,6 +62,14 @@ export interface CustomerDTO {
   activities?: CustomerActivityDTO[];
   stageHistories?: CustomerStageHistoryDTO[];
   _count?: { orders: number; quotations?: number };
+  confirmedOrdersCount?: number;
+  customerType?: "NEW" | "EXISTING";
+  latestOrder?: {
+    id: string;
+    orderCode: string;
+    status: string;
+    orderDate: string;
+  } | null;
   createdAt: string;
   updatedAt: string;
 }

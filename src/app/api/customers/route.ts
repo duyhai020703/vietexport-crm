@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, isManagerOrAdmin } from "@/lib/auth";
+import { isConfirmedOrderStatus } from "@/lib/customer-stage-sync";
 import type {
   CustomerChannel,
   CustomerSource,
@@ -106,12 +107,28 @@ export async function GET(req: NextRequest) {
           take: 10,
           include: { changedBy: { select: { id: true, name: true } } },
         },
+        orders: {
+          select: { id: true, orderCode: true, status: true, orderDate: true },
+          orderBy: [{ orderDate: "desc" }, { createdAt: "desc" }],
+        },
         _count: { select: { orders: true, quotations: true } },
       },
       orderBy: { updatedAt: "desc" },
     });
 
-    return NextResponse.json({ customers });
+    const enrichedCustomers = customers.map(({ orders, ...rest }) => {
+      const confirmedOrdersCount = orders.filter((o) =>
+        isConfirmedOrderStatus(o.status)
+      ).length;
+      return {
+        ...rest,
+        confirmedOrdersCount,
+        customerType: confirmedOrdersCount > 0 ? "EXISTING" : "NEW",
+        latestOrder: orders[0] ?? null,
+      };
+    });
+
+    return NextResponse.json({ customers: enrichedCustomers });
   } catch (error) {
     console.error("GET /api/customers error:", error);
     return NextResponse.json(

@@ -6,6 +6,7 @@ import {
   prepareOrderItems,
   type OrderItemInput,
 } from "@/lib/order-helpers";
+import { syncCustomerStageFromOrders } from "@/lib/customer-stage-sync";
 import type { Incoterm, OrderStatus, OrderType } from "@/generated/prisma/client";
 
 export async function PATCH(
@@ -125,7 +126,7 @@ export async function PATCH(
 
       const nextStatus = status ?? existing.status;
 
-      return tx.order.update({
+      const updatedOrder = await tx.order.update({
         where: { id },
         data: {
           ...(status !== undefined ? { status } : {}),
@@ -197,6 +198,17 @@ export async function PATCH(
           payments: { orderBy: { createdAt: "asc" } },
         },
       });
+
+      if (status !== undefined && status !== existing.status) {
+        await syncCustomerStageFromOrders(
+          tx,
+          existing.customerId,
+          currentUser.id,
+          `Tự động đồng bộ từ đơn ${existing.orderCode}`
+        );
+      }
+
+      return updatedOrder;
     });
 
     return NextResponse.json({ order: updated });
@@ -245,7 +257,15 @@ export async function DELETE(
       );
     }
 
-    await prisma.order.delete({ where: { id } });
+    await prisma.$transaction(async (tx) => {
+      await tx.order.delete({ where: { id } });
+      await syncCustomerStageFromOrders(
+        tx,
+        existing.customerId,
+        currentUser.id,
+        `Tự động đồng bộ sau khi xóa đơn ${existing.orderCode}`
+      );
+    });
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("DELETE /api/orders/[id] error:", error);

@@ -5,6 +5,7 @@ import { Edit2, ShoppingBag, Trash2, AlertTriangle, Clock } from "lucide-react";
 import type { CustomerDTO } from "@/types/crm";
 import {
   getChannelLabel,
+  getOrderStatusMeta,
   getSourceLabel,
   getStageMeta,
   isOverdueSevenDays,
@@ -49,9 +50,20 @@ export default function CustomerListView({
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <span className="inline-block px-2 py-0.5 rounded bg-[#EBF4FF] text-[#1677FF] border border-[#BFDBFE]/60 font-mono text-[11px] font-semibold mb-1">
-                    {c.customerCode}
-                  </span>
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <span className="inline-block px-2 py-0.5 rounded bg-[#EBF4FF] text-[#1677FF] border border-[#BFDBFE]/60 font-mono text-[11px] font-semibold">
+                      {c.customerCode}
+                    </span>
+                    <span
+                      className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                        c.customerType === "EXISTING"
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                          : "bg-slate-100 text-slate-600 border-slate-200"
+                      }`}
+                    >
+                      {c.customerType === "EXISTING" ? "Khách cũ" : "Khách mới"}
+                    </span>
+                  </div>
                   <button
                     type="button"
                     onClick={() => onEdit(c)}
@@ -194,6 +206,17 @@ export default function CustomerListView({
                     >
                       {c.companyName}
                     </button>
+                    <div className="mt-0.5 flex items-center gap-1.5">
+                      <span
+                        className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                          c.customerType === "EXISTING"
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                            : "bg-slate-100 text-slate-600 border-slate-200"
+                        }`}
+                      >
+                        {c.customerType === "EXISTING" ? "Khách cũ" : "Khách mới"}
+                      </span>
+                    </div>
                     {c.pipelineStage === "LOST" && c.lostReason && (
                       <p className="text-xs text-rose-600 mt-0.5 line-clamp-1">
                         Lý do trượt: {c.lostReason}
@@ -277,6 +300,17 @@ export default function CustomerListView({
                       <ShoppingBag className="w-3.5 h-3.5" />
                       {c._count?.orders ?? 0} đơn
                     </button>
+                    {c.latestOrder && (
+                      <div className="mt-1">
+                        <span
+                          className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
+                            getOrderStatusMeta(c.latestOrder.status).color
+                          }`}
+                        >
+                          {getOrderStatusMeta(c.latestOrder.status).label}
+                        </span>
+                      </div>
+                    )}
                   </td>
                   <td className="py-3 px-4 whitespace-nowrap text-slate-700">
                     {c.salesRep.name}

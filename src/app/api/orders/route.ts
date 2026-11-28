@@ -10,6 +10,7 @@ import {
   prepareOrderItems,
   type OrderItemInput,
 } from "@/lib/order-helpers";
+import { syncCustomerStageFromOrders } from "@/lib/customer-stage-sync";
 import type {
   Incoterm,
   OrderStatus,
@@ -212,7 +213,7 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      return tx.order.create({
+      const createdOrder = await tx.order.create({
         data: {
           orderCode,
           poNumber: poNumber?.trim() || null,
@@ -256,6 +257,15 @@ export async function POST(req: NextRequest) {
           payments: true,
         },
       });
+
+      await syncCustomerStageFromOrders(
+        tx,
+        customerId,
+        currentUser.id,
+        `Tự động đồng bộ khi tạo đơn ${orderCode}`
+      );
+
+      return createdOrder;
     });
 
     return NextResponse.json({ order }, { status: 201 });

@@ -759,14 +759,19 @@ export default function CustomerOrdersTab({
             <div className="flex items-center gap-2">
               <button
                 type="button"
+                disabled={products.length === 0}
                 onClick={() => {
-                  setSkuError("");
-                  setShowAddSku((prev) => !prev);
+                  const first = products[0];
+                  if (!first) return;
+                  setItems((prev) => [
+                    ...prev,
+                    buildDraftItemFromProduct(first, 100, customerCountry, ""),
+                  ]);
                 }}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold hover:bg-emerald-100"
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#EBF4FF] text-[#1677FF] text-xs font-semibold hover:bg-blue-100 disabled:opacity-50"
               >
                 <Plus className="w-3.5 h-3.5" />
-                {showAddSku ? "Đóng thêm mã hàng" : "Thêm mã hàng mới"}
+                Tạo dòng mới
               </button>
             </div>
           </div>
@@ -911,7 +916,7 @@ export default function CustomerOrdersTab({
 
           {products.length === 0 ? (
             <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2.5">
-              Chưa có sản phẩm nào trong thư viện SKU. Nhấn &quot;Thêm mã hàng mới&quot; để tạo.
+              Chưa có sản phẩm nào trong thư viện SKU. Vui lòng thêm ở mục Sản phẩm (SKU).
             </div>
           ) : (
             <div className="space-y-2.5">
